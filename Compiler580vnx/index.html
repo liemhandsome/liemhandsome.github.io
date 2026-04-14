@@ -544,11 +544,9 @@ const EXAMPLES = {
   hello: `org 0xe9e0
 
 setlr
+buffer_clear
 xr0 = 0x1111, adr_of text
 printline
-render.ddd4
-waitshift
-buffer_clear
 render.ddd4
 
 text:
@@ -557,41 +555,38 @@ str "Hello~580VNX"`,
   waitshift: `org 0xe9e0
 
 setlr
+buffer_clear
+waitshift
 xr0 = 0x1111, adr_of msg
 printline
 render.ddd4
-waitshift
-buffer_clear
-render.ddd4
 
 msg:
-str "Press~SHIFT"`,
+str "SHIFT"`,
 
   drawline: `org 0xe9e0
 
 setlr
-er0 = 0x0000
-er2 = 0x00EF
-r0 = 0x00
-r1 = 0x08
-line_draw
-render.ddd4
-waitshift
 buffer_clear
+xr0=hex 01 01 31 31
+line_draw
 render.ddd4`,
 
   loop: `org 0xe9e0
 
-setlr
 
-loop:
+home:
+waitshift
+setlr
+buffer_clear
   xr0 = 0x1111, adr_of msg
   printline
   render.ddd4
-  waitshift
-  buffer_clear
-  render.ddd4
-  goto loop
+loop:
+xr0=0xD630,0xD184
+BL strcpy
+er14=0xD62E
+sp=er14,pop er14
 
 msg:
 str "Looping..."`,
@@ -599,17 +594,15 @@ str "Looping..."`,
   str: `org 0xe9e0
 
 setlr
+buffer_clear
 xr0 = 0x1111, adr_of line1
 printline
 xr0 = 0x2121, adr_of line2
 printline
 render.ddd4
-waitshift
-buffer_clear
-render.ddd4
 
 line1:
-str "Bashame~ROP"
+str "Handsome~ROP"
 line2:
 str "fx-580VNX"`
 };
