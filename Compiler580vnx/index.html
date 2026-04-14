@@ -547,9 +547,6 @@ setlr
 xr0 = 0x1111, adr_of text
 printline
 render.ddd4
-waitshift
-buffer_clear
-render.ddd4
 
 text:
 str "Hello~580VNX"`,
@@ -557,41 +554,37 @@ str "Hello~580VNX"`,
   waitshift: `org 0xe9e0
 
 setlr
+buffer_clear
+waitshift
 xr0 = 0x1111, adr_of msg
 printline
 render.ddd4
-waitshift
-buffer_clear
-render.ddd4
-
 msg:
 str "Press~SHIFT"`,
 
   drawline: `org 0xe9e0
 
 setlr
-er0 = 0x0000
-er2 = 0x00EF
-r0 = 0x00
-r1 = 0x08
+buffer_clear
+xr0=0x0101,0x3131
 line_draw
 render.ddd4
-waitshift
-buffer_clear
-render.ddd4`,
+`,
 
   loop: `org 0xe9e0
 
 setlr
-
-loop:
+buffer_clear
   xr0 = 0x1111, adr_of msg
   printline
   render.ddd4
-  waitshift
-  buffer_clear
-  render.ddd4
-  goto loop
+  pop xr0
+0xD630
+0xD184
+BL strcpy
+pop er14
+0xD62E
+sp=er14,pop er14
 
 msg:
 str "Looping..."`,
@@ -604,12 +597,9 @@ printline
 xr0 = 0x2121, adr_of line2
 printline
 render.ddd4
-waitshift
-buffer_clear
-render.ddd4
 
 line1:
-str "Bashame~ROP"
+str "Handsome~ROP"
 line2:
 str "fx-580VNX"`
 };
