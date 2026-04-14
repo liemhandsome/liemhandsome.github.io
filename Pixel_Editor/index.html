@@ -128,8 +128,9 @@ input[type="file"]{
   display:block;border:1px solid var(--border2);
   image-rendering:crisp-edges;touch-action:none;
   background:#1a1400;cursor:crosshair;
+  max-width:100%;      /* thêm dòng này */
+  height:auto;         /* thêm dòng này */
 }
-
 /* ── OUTPUT SECTION ── */
 .output-section{padding:12px 16px;border-bottom:1px solid var(--border);}
 .panel-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.16em;color:var(--dimmer);display:block;margin-bottom:6px;}
@@ -360,15 +361,22 @@ textarea:focus{border-color:var(--amber2);}
   }
 
   function loadHex(){
-    const w=parseInt(hexW.value),h=parseInt(hexH.value);
-    if(w<1||h<1||w>192||h>63) return;
-    createGrid(h,w);
-    const bytes=hexInput.value.trim().split(/\s+/).filter(b=>/^[0-9A-Fa-f]+$/.test(b));
-    let bin='';bytes.forEach(b=>bin+=parseInt(b,16).toString(2).padStart(8,'0'));
-    let idx=0;
-    for(let r=0;r<h;r++) for(let c=0;c<w;c++){if(bin[idx]==='1') setPixel(r,c,true);idx++;}
-    generateData();setStatus('> hex loaded_');
+  const w=parseInt(hexW.value),h=parseInt(hexH.value);
+  if(w<1||h<1||w>192||h>63) return;
+  createGrid(h,w);
+  const bytes=hexInput.value.trim().split(/\s+/).filter(b=>/^[0-9A-Fa-f]+$/.test(b));
+  let bin='';
+  bytes.forEach(b=>bin+=parseInt(b,16).toString(2).padStart(8,'0'));
+  let idx=0;
+  for(let r=0;r<h;r++){
+    for(let c=0;c<w;c++){
+      if(bin[idx]==='1') setPixel(r,c,true);
+      idx++;
+    }
   }
+  generateData();
+  setStatus('> hex loaded_');
+}
 
   function processImage(){
     const file=imageLoader.files[0];if(!file) return setStatus('> no image_',true);
@@ -402,6 +410,14 @@ textarea:focus{border-color:var(--amber2);}
   document.getElementById('processImageBtn').onclick=processImage;
   document.querySelectorAll('[data-target]').forEach(btn=>{
     btn.onclick=()=>copyText(document.getElementById(btn.dataset.target).value);
+  });
+  // Tự động giới hạn giá trị input khi nhập tay
+  [colsInput, rowsInput, hexW, hexH, imgW, imgH].forEach(inp => {
+    inp.addEventListener('input', function() {
+      const max = parseInt(this.max) || (this.id.includes('W') ? 192 : 63);
+      if (this.value > max) this.value = max;
+      if (this.value < 1) this.value = 1;
+    });
   });
 
   createGrid();
