@@ -1,19 +1,216 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Home Handsome</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>580VNX ROP TOOLKIT · liemhandsome</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+  h1 {
+  white-space: nowrap;
+}
+    body {
+      min-height: 100vh;
+      background: #0a0800;
+      background-image: 
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255, 176, 0, 0.05) 0%, transparent 70%),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+      padding: 20px;
+    }
+
+    .toolkit-card {
+      max-width: 780px;
+      width: 100%;
+      background: #0f0c00;
+      border: 1px solid #4d3500;
+      box-shadow: 0 0 0 1px #2a1e00 inset, 0 20px 35px -10px rgba(0,0,0,0.9);
+      position: relative;
+      padding: 28px 28px 36px;
+      transition: all 0.2s;
+    }
+
+    .toolkit-card::before,
+    .toolkit-card::after,
+    .corner-bl,
+    .corner-br {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: #ffb000;
+      border-style: solid;
+      pointer-events: none;
+    }
+
+    .toolkit-card::before {
+      top: -1px;
+      left: -1px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .toolkit-card::after {
+      top: -1px;
+      right: -1px;
+      border-width: 2px 2px 0 0;
+    }
+
+    .corner-bl {
+      bottom: -1px;
+      left: -1px;
+      border-width: 0 0 2px 2px;
+    }
+
+    .corner-br {
+      bottom: -1px;
+      right: -1px;
+      border-width: 0 2px 2px 0;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+      border-bottom: 1px dashed #3d2c00;
+      padding-bottom: 16px;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      color: #ffb000;
+      text-shadow: 0 0 12px #ff8c00, 0 0 30px rgba(255,140,0,0.4);
+      line-height: 1.1;
+      word-break: break-word;
+    }
+
+    h1 span {
+      color: #ffdb80;
+      text-shadow: 0 0 8px #ffb86b;
+    }
+
+    .byline {
+      color: #b3802a;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      background: #1f1800;
+      padding: 3px 14px;
+      border: 1px solid #6b4a00;
+      border-radius: 30px;
+      backdrop-filter: blur(2px);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .byline b {
+      color: #ffc468;
+      font-weight: 600;
+    }
+
+    .launch-btn-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0 18px;
+    }
+
+    .launch-btn {
+      background: transparent;
+      border: 2px solid #ffb000;
+      color: #ffd58c;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.1rem;           /* 缩小字体 */
+      font-weight: bold;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 16px 32px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(255, 176, 0, 0.3), inset 0 0 10px rgba(255, 176, 0, 0.05);
+      background: #1f1800;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+      border-radius: 8px;
+      backdrop-filter: blur(4px);
+      white-space: nowrap;          /* 强制不换行 */
+    }
+
+    .launch-btn:hover {
+      background: #2f2400;
+      border-color: #ffc234;
+      color: #fff2d4;
+      box-shadow: 0 0 35px #ffb00066, inset 0 0 20px #ffb00033;
+      transform: scale(1.02);
+      text-shadow: 0 0 8px #ffdd99;
+    }
+
+    .launch-btn:active {
+      transform: scale(0.98);
+    }
+
+    .footer-note {
+      margin-top: 28px;
+      text-align: right;
+      color: #7a5a1a;
+      font-size: 0.7rem;
+      border-top: 1px dashed #3a2800;
+      padding-top: 16px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* 响应式 */
+    @media (max-width: 550px) {
+      .toolkit-card { padding: 18px; }
+      h1 { font-size: 1.9rem; }
+      .byline { font-size: 0.65rem; padding: 2px 10px; white-space: normal; }
+      .launch-btn { 
+        font-size: 0.9rem;          /* 移动端再缩小一点 */
+        padding: 12px 16px; 
+        letter-spacing: 0.1em; 
+        white-space: nowrap; 
+      }
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0px, rgba(255,120,0,0.02) 1px, transparent 2px, transparent 3px);
+      pointer-events: none;
+      z-index: 999;
+    }
+  </style>
 </head>
 <body>
-  <a href="https://liemhandsome.github.io/Login">
-    <button class="btn" onclick="" >Login</button>
-  </a>
-  <a href="https://liemhandsome.github.io/Sign">
-    <button class="btn">Sign in</button>
-  </a>
-  <h1 id="m1">Wellcome to website for me!</h1>
-  <script src="script.js"></script>
+  <div class="toolkit-card">
+    <span class="corner-bl" aria-hidden="true"></span>
+    <span class="corner-br" aria-hidden="true"></span>
+
+    <div class="header-row">
+      <h1>TOOLS <span>ROP</span> CASIO 580</h1>
+      <div class="byline">by <b>@liemdeptraiqua · Handsome Boy</b></div>
+    </div>
+
+    <div class="launch-btn-wrapper">
+      <a href="https://liemhandsome.github.io/Compiler580vnx/" target="_blank" rel="noopener noreferrer" class="launch-btn">
+        ⚡ OPEN COMPILER 580VNX ⚡
+      </a>
+    </div>
+
+    <div class="footer-note">ROP TOOL CASIO · HANDSOME BOY    </div>
+  </div>
 </body>
 </html>
