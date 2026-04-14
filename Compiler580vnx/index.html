@@ -53,34 +53,30 @@ body {
     radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,160,0,0.06) 0%, transparent 70%);
 }
 
-/* ── LOADER ─────────────────────────────────── */
+/* ── INLINE LOADER ──────────────────────────── */
 #pyodideLoader {
-  position:fixed;inset:0;
-  background: var(--bg);
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  z-index:9998;gap:14px;
+  display: none; /* removed fullscreen overlay */
 }
-.loader-icon { font-size:2rem; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
-.loader-text {
-  font-family:'Bebas Neue',sans-serif;
-  font-size:2rem;
-  color: var(--amber);
-  letter-spacing:.15em;
-  text-shadow: 0 0 20px var(--amber2);
+.compile-loading-bar {
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
 }
-.loader-sub { color: var(--dim); font-size:.8rem; }
-.loader-bar-wrap {
-  width:260px;height:4px;
-  background:var(--border);
-  border:1px solid var(--border2);
-}
-.loader-bar {
-  height:100%;width:0%;
+.compile-loading-bar .bar-fill {
+  height: 100%;
+  width: 0%;
   background: var(--amber);
-  box-shadow: 0 0 10px var(--amber2);
-  transition:width .4s;
+  box-shadow: 0 0 8px var(--amber2);
+  transition: width .4s;
+}
+.compile-loading-bar.indeterminate .bar-fill {
+  width: 40%;
+  animation: slide 1.2s infinite linear;
+}
+@keyframes slide {
+  0%   { margin-left: -40%; }
+  100% { margin-left: 100%; }
 }
 
 /* ── WRAPPER ────────────────────────────────── */
@@ -339,7 +335,87 @@ textarea::placeholder { color:var(--dimmer); }
   font-family:'Share Tech Mono',monospace;
 }
 
-/* ── OUTPUT TOKENS ──────────────────────────── */
+/* ── TABS ────────────────────────────────────── */
+.tab-bar {
+  display:flex;gap:0;
+  border:1px solid var(--border2);
+  border-bottom:none;
+  background:var(--bg);
+}
+.tab-btn {
+  flex:1;
+  border:none;border-radius:0;
+  padding:9px 0;
+  font-size:.78rem;
+  letter-spacing:.1em;
+  color:var(--dim);
+  background:transparent;
+  border-right:1px solid var(--border);
+}
+.tab-btn:last-child { border-right:none; }
+.tab-btn.active {
+  color:var(--bg);
+  background:var(--amber);
+  box-shadow:none;
+}
+.tab-btn.active:hover { background:var(--amber2); border:none; box-shadow:none; }
+.tab-btn:hover:not(.active) { background:rgba(255,176,0,.08); box-shadow:none; border-right:1px solid var(--border); }
+
+/* ── ADDR INPUT ──────────────────────────────── */
+.addr-inp {
+  background:var(--bg);
+  border:1px solid var(--border2);
+  color:var(--amber);
+  font-family:'Share Tech Mono',monospace;
+  font-size:.75rem;
+  padding:4px 8px;
+  width:68px;
+  text-align:center;
+  outline:none;
+}
+.addr-inp:focus { border-color:var(--amber2); }
+
+/* ── DECOMPILER OUTPUT ───────────────────────── */
+#decompOutput {
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--border);
+  min-height:300px;
+  max-height:520px;
+  overflow-y:auto;
+  font-family:'Share Tech Mono',monospace;
+  font-size:12px;
+  padding:10px 12px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border2) transparent;
+}
+#decompOutput::-webkit-scrollbar { width:4px; }
+#decompOutput::-webkit-scrollbar-thumb { background:var(--border2); }
+
+.gadget-line {
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:6px 10px;
+  padding:4px 4px;
+  border-bottom:1px solid var(--border);
+  font-size:12px;
+}
+.gadget-line:hover { background:rgba(255,176,0,.04); }
+.hex-badge {
+  background:rgba(255,176,0,.1);
+  border:1px solid var(--border2);
+  padding:1px 8px;
+  font-size:11px;
+  color:var(--dim);
+  letter-spacing:.04em;
+}
+.d-arrow { color:var(--dimmer); }
+.d-addr  { color:var(--amber2);font-weight:bold;font-size:11px; }
+.d-name  { color:var(--green); }
+.d-unk   { color:var(--red);opacity:.8; }
+.d-data  { color:var(--amber3); }
+.d-label { color:var(--amber);font-weight:bold;font-size:12px;letter-spacing:.04em; }
+.d-loc   { margin-left:auto;color:var(--dimmer);font-size:10px; }
+
 .tok-hex   { color:#ffb000; }
 .tok-key   { color:#ffe066; font-weight:bold; }
 .tok-addr  { color:#ff8c00; }
@@ -352,64 +428,91 @@ textarea::placeholder { color:var(--dimmer); }
 <body>
 
 <!-- PYODIDE LOADING OVERLAY -->
-<div id="pyodideLoader">
-  <div class="loader-icon">⚙</div>
-  <div class="loader-text">Initialising Runtime</div>
-  <div class="loader-sub">Loading Pyodide — first boot ~5s…</div>
-  <div class="loader-bar-wrap"><div class="loader-bar" id="loaderBar"></div></div>
-  <div class="loader-sub" id="loaderMsg">Fetching…</div>
-</div>
-
 <div class="wrap">
 
   <!-- HEADER -->
   <div class="header">
     <div class="title-block">
-      <h1>580VNX <span>ROP</span> COMPILER</h1>
+      <h1>580VNX <span>ROP</span> TOOLKIT</h1>
     </div>
     <div class="credit">by <b>@liemdeptraiqua</b> · Handsome Boy</div>
   </div>
 
-  <!-- TOOLBAR -->
-  <div class="toolbar">
-    <button id="compileBtn" disabled>[ COMPILE ]</button>
-    <button id="pasteBtn">[ PASTE ]</button>
-    <button id="clearBtn">[ CLEAR ]</button>
-    <button id="copyHexBtn">[ COPY HEX ]</button>
-    <button id="copyKeyBtn">[ COPY KEY ]</button>
-    <div class="fmt-switch">
-      <button class="fmt-btn active" id="fmtHex">HEX</button>
-      <button class="fmt-btn" id="fmtKey">KEY</button>
+  <!-- TABS -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabCompile">[ COMPILER ]</button>
+    <button class="tab-btn" id="tabDecomp">[ DECOMPILER ]</button>
+  </div>
+
+  <!-- ══════════════ COMPILER SECTION ══════════════ -->
+  <div id="sectionCompile">
+    <div class="toolbar">
+      <button id="compileBtn" disabled>[ COMPILE ]</button>
+      <button id="pasteBtn">[ PASTE ]</button>
+      <button id="clearBtn">[ CLEAR ]</button>
+      <button id="copyHexBtn">[ COPY HEX ]</button>
+      <span id="pyLoadLabel" style="color:var(--dim);font-size:.7rem;margin-left:4px">⏳ loading python...</span>
+    </div>
+    <div class="compile-loading-bar indeterminate" id="pyLoadBar">
+      <div class="bar-fill" id="loaderBar"></div>
+    </div>
+    <div class="examples-row">
+      <span class="examples-label">// examples</span>
+      <button class="ex-btn" data-example="hello">hello_world</button>
+      <button class="ex-btn" data-example="waitshift">waitshift</button>
+      <button class="ex-btn" data-example="drawline">draw_line</button>
+      <button class="ex-btn" data-example="loop">loop_goto</button>
+      <button class="ex-btn" data-example="str">multi_str</button>
+    </div>
+    <div class="main-border">
+      <div class="panels">
+        <div class="panel">
+          <span class="panel-label">// asm source</span>
+          <textarea id="asmInput" spellcheck="false" placeholder="org 0xe9e0&#10;&#10;setlr&#10;xr0 = 0x1111, adr_of text&#10;printline&#10;render.ddd4&#10;waitshift&#10;&#10;text:&#10;str &quot;Hello~World&quot;"></textarea>
+        </div>
+        <div class="panel">
+          <span class="panel-label">// output</span>
+          <div id="outputBox"><span class="tok-note">// ready — press [ COMPILE ] or ctrl+enter</span></div>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-pill" id="statusMsg">&gt; ready_</div>
+        <div class="stats-pill" id="statsMsg"></div>
+      </div>
     </div>
   </div>
 
-  <!-- EXAMPLES -->
-  <div class="examples-row">
-    <span class="examples-label">// examples</span>
-    <button class="ex-btn" data-example="hello">hello_world</button>
-    <button class="ex-btn" data-example="waitshift">waitshift</button>
-    <button class="ex-btn" data-example="drawline">draw_line</button>
-    <button class="ex-btn" data-example="loop">loop_goto</button>
-    <button class="ex-btn" data-example="str">multi_str</button>
-  </div>
-
-  <!-- PANELS -->
-  <div class="main-border">
-    <div class="panels">
-      <div class="panel">
-        <span class="panel-label">// asm source</span>
-        <textarea id="asmInput" spellcheck="false" placeholder="org 0xe9e0&#10;&#10;setlr&#10;xr0 = 0x1111, adr_of text&#10;printline&#10;render.ddd4&#10;waitshift&#10;&#10;text:&#10;str &quot;Hello~World&quot;"></textarea>
+  <!-- ══════════════ DECOMPILER SECTION ══════════════ -->
+  <div id="sectionDecomp" style="display:none">
+    <div class="toolbar">
+      <button id="decompBtn">[ DECOMPILE ]</button>
+      <button id="dPasteBtn">[ PASTE ]</button>
+      <button id="dClearBtn">[ CLEAR ]</button>
+      <button id="dCopyBtn">[ COPY ]</button>
+      <div class="fmt-switch">
+        <button class="fmt-btn active" id="dModeDetail">DETAILED</button>
+        <button class="fmt-btn" id="dModeSimple">SIMPLE</button>
       </div>
-      <div class="panel">
-        <span class="panel-label">// output</span>
-        <div id="outputBox"><span class="tok-note">// ready — press [ COMPILE ] or ctrl+enter</span></div>
-      </div>
+      <span style="color:var(--dim);font-size:.7rem;margin-left:4px">dest:</span>
+      <input class="addr-inp" id="startAddrInput" value="d730" maxlength="6">
+      <span style="color:var(--dim);font-size:.7rem">src:</span>
+      <input class="addr-inp" id="backupAddrInput" value="e9e0" maxlength="6">
     </div>
-
-    <!-- STATUS -->
-    <div class="status-row">
-      <div class="status-pill" id="statusMsg">&gt; ready_</div>
-      <div class="stats-pill" id="statsMsg"></div>
+    <div class="main-border">
+      <div class="panels">
+        <div class="panel">
+          <span class="panel-label">// hex input</span>
+          <textarea id="hexInput" spellcheck="false" placeholder="d0 08 33 30 e0 a0 30 30 ..."></textarea>
+        </div>
+        <div class="panel">
+          <span class="panel-label">// decompiled output</span>
+          <div id="decompOutput"><span class="tok-note">// paste hex and press [ DECOMPILE ]</span></div>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-pill" id="dStatusMsg">&gt; ready_</div>
+        <div class="stats-pill" id="dStatsMsg"></div>
+      </div>
     </div>
   </div>
 
@@ -521,16 +624,10 @@ const statsMsg   = document.getElementById('statsMsg');
 const compileBtn = document.getElementById('compileBtn');
 const clearBtn   = document.getElementById('clearBtn');
 const copyHexBtn = document.getElementById('copyHexBtn');
-const copyKeyBtn = document.getElementById('copyKeyBtn');
 const pasteBtn   = document.getElementById('pasteBtn');
-const fmtHex     = document.getElementById('fmtHex');
-const fmtKey     = document.getElementById('fmtKey');
 const loaderBar  = document.getElementById('loaderBar');
-const loaderMsg  = document.getElementById('loaderMsg');
 
-let currentFmt   = 'hex';
 let lastHexResult = '';
-let lastKeyResult = '';
 let pyodide = null;
 
 function setStatus(txt, isErr=false) {
@@ -544,21 +641,33 @@ function setOutput(html) { outputBox.innerHTML = html; }
 // PYODIDE BOOTSTRAP
 // ═══════════════════════════════════════════════════
 async function loadPyodide_() {
-  loaderMsg.textContent = 'Fetching Pyodide runtime…';
-  loaderBar.style.width = '15%';
+  const pyLoadLabel = document.getElementById('pyLoadLabel');
+  const pyLoadBar   = document.getElementById('pyLoadBar');
 
-  const script = document.createElement('script');
-  script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
-  document.head.appendChild(script);
-  await new Promise((res, rej) => { script.onload = res; script.onerror = rej; });
+  const setLabel = t => { if(pyLoadLabel) pyLoadLabel.textContent = t; };
+  const setBar   = w => { if(loaderBar) loaderBar.style.width = w; };
 
-  loaderBar.style.width = '40%';
-  loaderMsg.textContent = 'Initialising Python…';
+  setLabel('⏳ fetching python...');
+  setBar('10%');
 
-  pyodide = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/' });
+  // Load pyodide.js script safely
+  await new Promise((res, rej) => {
+    if (window.loadPyodide) { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+    s.onload = res;
+    s.onerror = () => rej(new Error('Failed to load pyodide.js'));
+    document.head.appendChild(s);
+  });
 
-  loaderBar.style.width = '75%';
-  loaderMsg.textContent = 'Setting up compiler…';
+  setBar('40%');
+  setLabel('⏳ initialising python...');
+  if (pyLoadBar) pyLoadBar.classList.remove('indeterminate');
+
+  pyodide = await window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/' });
+
+  setBar('75%');
+  setLabel('⏳ setting up compiler...');
 
   // Inject compiler data + char table
   const data = JSON.parse(document.getElementById('compilerData').textContent);
@@ -681,6 +790,18 @@ def process(line):
             nb = len(line)//2-1
             data = int(line,16)
             for _ in range(nb): result.append(data&0xFF); data>>=8
+        return
+
+    if line.startswith('hex'):
+        hexdata = line[3:].strip()
+        if not hexdata: raise ValueError('Missing hex data after "hex"')
+        hexdata = ''.join(hexdata.split())
+        if not all(c in '0123456789abcdefABCDEF' for c in hexdata):
+            raise ValueError(f'Invalid hex data: {hexdata}')
+        if len(hexdata) % 2 != 0:
+            raise ValueError('Hex data must have even number of digits')
+        for i in range(0, len(hexdata), 2):
+            result.append(int(hexdata[i:i+2], 16))
         return
 
     if line.startswith('call'):
@@ -886,18 +1007,19 @@ print("Compiler ready! Commands:", len(commands), "| Data labels:", len(datalabe
 `);
 
   loaderBar.style.width = '100%';
-  loaderMsg.textContent = 'Ready!';
-  await new Promise(r => setTimeout(r, 400));
+  await new Promise(r => setTimeout(r, 300));
 
-  document.getElementById('pyodideLoader').style.display = 'none';
+  document.getElementById('pyLoadLabel').textContent = '✓ compiler ready';
+  document.getElementById('pyLoadBar').style.display = 'none';
   compileBtn.disabled = false;
-  setStatus('✅ Compiler ready');
+  setStatus('> compiler ready_');
 }
 
 loadPyodide_().catch(e => {
-  loaderMsg.textContent = 'Failed: ' + e.message;
-  loaderMsg.style.color = '#ff5370';
-  setStatus('❌ Failed to load Python: ' + e.message, true);
+  document.getElementById('pyLoadLabel').textContent = '❌ python failed — compiler unavailable';
+  document.getElementById('pyLoadLabel').style.color = 'var(--red)';
+  document.getElementById('pyLoadBar').style.display = 'none';
+  setStatus('❌ compiler unavailable', true);
 });
 
 // ═══════════════════════════════════════════════════
@@ -917,10 +1039,10 @@ async function doCompile(fmt) {
     pyodide.globals.set('_src', src);
     pyodide.globals.set('_fmt', fmt);
     const res = await pyodide.runPythonAsync('compile_program(_src, _fmt)');
-    const [out, labelInfo, byteCount] = res.toJs();
+    const arr = res.toJs ? res.toJs() : res;
+    const [out, labelInfo, byteCount] = arr;
     const dt = ((performance.now() - t0) / 1000).toFixed(3);
 
-    // Parse output  e.g. "0xe9e0: aa bb cc ..."
     const colonIdx = out.indexOf(':');
     const addr = out.slice(0, colonIdx);
     const bytes = out.slice(colonIdx + 1).trim();
@@ -935,24 +1057,16 @@ async function doCompile(fmt) {
       labelHtml = '\n\n' + lines.join('\n');
     }
 
-    if (fmt === 'hex') {
-      lastHexResult = out;
-      const colored = byteArr.map(b => `<span class="tok-hex">${b}</span>`).join(' ');
-      setOutput(`<span class="tok-addr">${addr}:</span>\n${colored}${labelHtml}`);
-    } else {
-      lastKeyResult = out;
-      const colored = byteArr.map(b =>
-        b.startsWith('<') ? `<span class="tok-key">${b}</span>` : `<span class="tok-hex">${b}</span>`
-      ).join(' ');
-      setOutput(`<span class="tok-addr">${addr}:</span>\n${colored}${labelHtml}`);
-    }
+    lastHexResult = out;
+    const colored = byteArr.map(b => `<span class="tok-hex">${b}</span>`).join(' ');
+    setOutput(`<span class="tok-addr">${addr}:</span>\n${colored}${labelHtml}`);
 
     statsMsg.textContent = `bytes: ${byteCount} | time: ${dt}s`;
-    setStatus(`✅ Compiled — ${byteCount} bytes`);
+    setStatus(`> compiled ${byteCount} bytes_`);
   } catch(e) {
     const msg = e.message || String(e);
     setOutput(`<span class="tok-err">// Compile error:\n${escHtml(msg)}</span>`);
-    setStatus('❌ Compile error', true);
+    setStatus('❌ compile error', true);
     statsMsg.textContent = '';
   } finally {
     compileBtn.disabled = false;
@@ -963,52 +1077,25 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ═══════════════════════════════════════════════════
-// FORMAT SWITCH — recompile if we have source
-// ═══════════════════════════════════════════════════
-fmtHex.onclick = () => {
-  currentFmt = 'hex';
-  fmtHex.classList.add('active'); fmtKey.classList.remove('active');
-  if (asmInput.value.trim()) doCompile('hex');
-};
-fmtKey.onclick = () => {
-  currentFmt = 'key';
-  fmtKey.classList.add('active'); fmtHex.classList.remove('active');
-  if (asmInput.value.trim()) doCompile('key');
-};
-
-compileBtn.onclick = () => doCompile(currentFmt);
+compileBtn.onclick = () => doCompile('hex');
 
 // Ctrl+Enter to compile
 asmInput.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCompile(currentFmt); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); doCompile('hex'); }
 });
 
 clearBtn.onclick = () => {
   asmInput.value = '';
-  setOutput('<span class="tok-note">// Press COMPILE or Ctrl+Enter</span>');
+  setOutput('<span class="tok-note">// ready — press [ COMPILE ] or ctrl+enter</span>');
   statsMsg.textContent = '';
-  lastHexResult = ''; lastKeyResult = '';
-  setStatus('🧹 Cleared');
+  lastHexResult = '';
+  setStatus('> cleared_');
 };
 
 copyHexBtn.onclick = async () => {
   const txt = lastHexResult || outputBox.innerText;
-  if (!txt || txt.includes('// ')) { setStatus('⚠️ Nothing to copy', true); return; }
-  await navigator.clipboard.writeText(txt).then(() => setStatus('📋 Hex copied')).catch(() => setStatus('❌ Copy failed', true));
-};
-
-copyKeyBtn.onclick = async () => {
-  if (!asmInput.value.trim()) { setStatus('⚠️ Nothing to copy', true); return; }
-  // compile key mode on demand
-  compileBtn.disabled = true;
-  try {
-    pyodide.globals.set('_src', asmInput.value.trim());
-    const out = await pyodide.runPythonAsync("compile_program(_src, 'key')");
-    lastKeyResult = out;
-    await navigator.clipboard.writeText(out).then(() => setStatus('🔑 Key copied')).catch(() => setStatus('❌ Copy failed', true));
-  } catch(e) { setStatus('❌ Key compile failed', true); }
-  finally { compileBtn.disabled = false; }
+  if (!txt || txt.includes('// ')) { setStatus('⚠ nothing to copy', true); return; }
+  await navigator.clipboard.writeText(txt).then(() => setStatus('> hex copied_')).catch(() => setStatus('❌ copy failed', true));
 };
 
 pasteBtn.onclick = async () => {
@@ -1026,9 +1113,411 @@ document.querySelectorAll('.ex-btn').forEach(btn => {
     asmInput.value = EXAMPLES[key] || '';
     setOutput('<span class="tok-note">// Press COMPILE or Ctrl+Enter</span>');
     statsMsg.textContent = '';
-    setStatus('📂 Example loaded');
+    setStatus('> example loaded_');
   };
 });
+
+// ═══════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════
+document.getElementById('tabCompile').onclick = () => {
+  document.getElementById('tabCompile').classList.add('active');
+  document.getElementById('tabDecomp').classList.remove('active');
+  document.getElementById('sectionCompile').style.display = '';
+  document.getElementById('sectionDecomp').style.display = 'none';
+};
+document.getElementById('tabDecomp').onclick = () => {
+  document.getElementById('tabDecomp').classList.add('active');
+  document.getElementById('tabCompile').classList.remove('active');
+  document.getElementById('sectionDecomp').style.display = '';
+  document.getElementById('sectionCompile').style.display = 'none';
+};
+
+// ═══════════════════════════════════════════════════
+// DECOMPILER ENGINE
+// ═══════════════════════════════════════════════════
+(function() {
+const addrToName = new Map();
+function addEntry(hexAddr, name) {
+    let num=parseInt(hexAddr,16);
+    if (!isNaN(num)&&!addrToName.has(num)) addrToName.set(num,name);
+}
+function normalizeName(name) {
+    return name.replace(/\s*=\s*/g,'=').replace(/\s*\+=\s*/g,'+=')
+        .replace(/\s*-=\s*/g,'-=').replace(/\s*>>\s*/g,'>>').replace(/\s*<<\s*/g,'<<')
+        .replace(/\s*,\s*/g,',').replace(/\s+/g,' ').trim();
+}
+const gadgetList=[
+    ["09fa8","setlr"],["308d0","setlr_pc"],["0a05c","DI,RT"],
+    ["23f9e","calc_checksum_set_f004"],["23fa6","calc_checksum_no_set_f004"],
+    ["23fad","calc_checksum_0"],["23fc0","calc_checksum_1"],["23fd4","calc_checksum_2"],
+    ["23fea","calc_checksum_3"],["23f21","pr_checksum"],["09ca0","[er8]+=er2,pop xr8"],
+    ["2702e","sp=er14,pop er14,rt"],["12da6","sp=er14,pop qr8"],["23f82","sp=er14,pop qr8,pop qr0"],
+    ["20d60","sp=er14,pop er14"],["21f74","sp=er6,pop er8"],["09820","sp=er14,pop xr12"],
+    ["13aac","sp=er14,pop qr8,pop er6"],["0ac34","er14=sp,rt"],["0a8a8","nop"],
+    ["13b66","er0+=er0,er0+=er2,er8=[er0]"],["13b9a","er0+=er0,er2+=er0,er0=[er2]"],
+    ["1ec0c","pop ea"],["27030","pop er14,rt"],["13332","pop er0,rt"],["18974","pop er2"],
+    ["250a6","pop er4"],["0a8a6","pop er8"],["16eca","pop er12,rt"],["17bda","pop qr0"],
+    ["12da8","pop qr8"],["177da","pop r0"],["1844a","pop r8"],["1622e","pop xr0"],
+    ["1d040","pop xr4"],["183a6","pop xr8"],["0d516","pop er10"],["0d04c","pop r12"],
+    ["12602","pop er0"],["21636","pop er12"],["15c78","pop er14"],["13ab0","pop er6"],
+    ["1dcf6","pop er6,rt"],["20730","pop xr12"],["16d88","pop er4,rt"],["16d7c","pop er8,rt"],
+    ["17072","pop qr0,rt"],["14c50","pop qr8,rt"],["15fc0","pop r4"],["16210","pop r4,rt"],
+    ["14c98","pop r9"],["10e5a","pop xr12,rt"],["1d972","pop xr4,rt"],["0e5e2","pop xr8,rt"],
+    ["093b8","pop er2,pop er8,er0=er2,rt"],["1893a","pop er0,pop er4"],
+    ["16754","pop er4,pop er8"],["201f6","pop er4,pop er12,pop r9"],
+    ["14bd8","er0+=er4,rt"],["13b80","er4+=er0,r8=r8,rt"],["21ba8","er0+=er8,rt"],
+    ["21bae","er2+=er8,rt"],["2fa0c","er0+=er2,rt"],["16078","er0+=1,rt"],["09ce4","r0+=1,rt"],
+    ["14fcc","er0+=er6,er10=er0,rt"],["20838","and r0,0f"],["24008","er6=er0,er0=er8,pop qr8"],
+    ["16170","er8=er0"],["0ea70","er2=er0,er0=er2,pop er8,rt"],["14bd6","er2=er0,er0+=er4,rt"],
+    ["0bf30","er0=er2,rt"],["2470a","er0=er4,pop er4"],["2f786","er0=er8,pop er8,rt"],
+    ["0a246","er0=er8,pop er8"],["15386","er0=er8"],["1edea","er0=er6,pop er8,pop xr4,rt"],
+    ["28c86","er2=er0,r0=r4,r1=0,pop xr4,rt"],["2ffc0","r0=r5,pop er4"],
+    ["1abb0","r0=r2=0"],["1abb2","r0=r2"],["15fde","r2=r0,pop er0"],
+    ["164e4","r2=r0,pop r6,pop er12"],["177b4","r2=0,r7=4"],["1ca8a","r0=0"],
+    ["1DD54","r0=0,rt"],["1DD58","r0=1,rt"],["18978","r0=0,pop er2"],["2ac30","r1=0,rt"],
+    ["16df2","r5=0,rt"],["17b32","er14=er0,pop xr0"],["0ac7c","er0=er12,pop er12,rt"],
+    ["13916","er10=er2,rt"],["20b52","er0=er10,pop xr8"],["1e60c","er0=1,rt"],
+    ["180d2","er2=0,er4=0,er6=0,er8=1,rt"],["09caa","er2=0,r0=2,[er8]=er2,pop xr8"],
+    ["0a88a","er2=1,r0=r2,rt"],["09c9e","r0=0,[er8]+=er2,pop xr8"],
+    ["27e7c","r2=1,r0=r2,pop er4,pop er8,rt"],["27e92","r0=r1,rt"],
+    ["14fce","er10=er0,rt"],["283fe","er2=0,er0=er2,pop er8"],["140e4","er0=er6,er2=er12"],
+    ["16e18","r4=0"],["0eda0","er0=0,rt"],["16d9a","[er2]=er0,r2=0,pop er4,rt"],
+    ["139d8","[er0]=er2,rt"],["208b2","[er0]=r2,rt"],["203D2","[er0]=r2"],
+    ["176d4","[er2]=r0,r2=0"],["09ca4","[er8]=er2,pop xr8"],["13330","[er4]=er0,pop er0,rt"],
+    ["1a588","[ea]=qr0"],["22226","[er12]=er14,pop xr4,pop qr8"],["1332a","[er4]+=1,rt"],
+    ["13336","[er4]-=1,rt"],["19e5a","er8=[ea+],rt"],["16614","[er2]=r0,r0=0"],
+    ["16d7a","er4=[er8],pop er8,rt"],["13b9e","er0=[er2],r2=9,rt"],["13b6a","er8=[er0],rt"],
+    ["09e4a","r0=[er2]"],["18274","r0=[er0]"],["298dc","er0=[er0],pop xr8,rt"],
+    ["09fdc","r0=[ea],rt"],["21f72","sp=[er8],pop er8"],["1c2c0","qr0=[ea],lea D002H,[ea]=qr0"],
+    ["1c64a","er6=[ea]"],["09e8a","er0-=er2,rt"],["29a40","er0-=er12,pop er8,pop er12,rt"],
+    ["09e98","r0-=1,rt"],["0ac5a","r0-=r8,pop er8,rt"],["122d4","or r0,r1"],["1a5c2","or qr0,qr8"],
+    ["20830","r0>>4,rt"],["1bb28","qr0>>4,rt"],["1bb5c","r0<<4,rt"],["1bb70","r1<<4,rt"],
+    ["1bb5a","er0<<4,rt"],["1bb56","xr0<<4,rt"],["1bb4e","qr0<<4,rt"],
+    ["0c790","er0-er2_gt,r0=0|r0=1,rt"],["09ae6","er0-er2_eq,r0=1|r0=0,rt"],
+    ["0c7a8","er2-er0_gt,r0=0|r0=1,rt"],["2abda","er0-er2_le,er0=er2,rt"],
+    ["297e2","er8-er0_lt,pop xr8"],["091ec","r0-0_lt,rt"],["091f4","r1-0_lt,rt"],
+    ["14bd4","er0*=r2,er2=er0,er0+=er4,rt"],["14fca","er0*=r2,er0+=er6,er10=er0,rt"],
+    ["28C54","er0/=r2,rt"],["160c2","sp+=20"],["162d4","sp+=10"],["168f0","sp+=2"],
+    ["1d3c8","sp+=4"],["09932","sp+=6,pop qr8"],["13184","sp+=50,pop qr8"],
+    ["131f6","sp+=20,pop qr8"],["13320","sp+=30,pop qr8"],["15c76","sp+=30,pop er14"],
+    ["1d3f2","sp+=2,r0=0"],["1d798","sp+=20,pop xr12"],["21634","sp+=10,pop er12"],
+    ["21b9c","sp+=60,pop xr8"],["284ac","sp+=4,pop xr8"],["08f74","sp+=64,pop er6,pop qr8"],
+    ["098ec","sp+=4,pop qr8,pop xr4"],["13412","sp+=40,pop qr8,pop xr4"],
+    ["138a6","sp+=60,pop qr8,pop xr4"],["18266","sp+=50,pop qr8,pop xr4"],
+    ["193a0","sp+=50,pop xr4,pop qr8"],["202b0","sp+=120,pop qr8,pop xr4"],
+    ["20660","sp+=2,pop xr4,pop qr8"],["21b9a","sp+=120,pop xr8"],
+    ["26b12","sp+=2,r0=1,pop er8"],["2122a","sp+=32,r2=r0,pop xr8"],
+    ["18614","?r0=00"],["33030","brk"],["0d71c","[ea]+=1,r0=3"],["2c81e","[ea]-=1,pop xr4"],
+    ["24836","B LEAVE"],["09450","BL memcpy,pop er0"],["203CC","BL strcpy"],["203E0","BL strcat"],
+    ["09D3A","BL memset,pop er2"],["23CAC","BL delay,pop xr0"],["20C40","BL line_print"],
+    ["23F62","BL printline"],["24004","BL hex_byte,er6=er0,er0=er8,pop qr8"],
+    ["20A50","BL smart_strcpy,pop er8"],["0A052","BL zero_KO"],["28AC2","BL line_draw"],
+    ["09AD4","BL render.ddd4"],["2B2BA","memcpy_auto_jmp"],["08f80","line_print"],
+    ["25c1c","getkeycode"],["09E96","[ea+]=r0,r0-=1,bne"],["09C20","cmp_ea"],
+    ["17922","calc_func"],["16082","cvt_hex_1"],["160f8","cvt_hex_2"],
+    ["10f20","memcpy_length_rn/8"],["1700e","memcpy_length_rn/2,pop qr0"],["13324","pop pc"],
+    ["0E5C8","strcpy"],["2EDA0","strcat"],["26FFA","memcpy"],["0A8AA","memmove"],
+    ["29A2C","strlen"],["1EB94","memset"],["203C2","smart_strcpy"],["203D6","smart_strcat"],
+    ["203B8","smart_strlen_n"],["2086C","basen_base_print"],["23DCC","smallprint"],
+    ["08F7C","line_print.col_0"],["08F7E","line_print"],["23DC8","printline"],
+    ["09470","render.e3d4"],["0947C","render.ddd4"],["09848","render_bitmap"],
+    ["09D34","memzero"],["26086","reset_routine"],["24BD6","get_string_constant"],
+    ["08C0C","fill_screen"],["08F02","str_decompress_print"],["09F3C","delay"],
+    ["0A1CE","_start"],["293D8","main"],["09440","buf1_to_buf2"],["09458","buf2_to_buf1"],
+    ["2AB26","byte_strlen_n"],["23C4C","diagnostic_mode"],["0ACB6","f_0ACB6"],
+    ["0AD92","diagnostic_wait_key"],["0E826","check_any_key_pressed__"],["23CB4","diagnostic"],
+    ["24344","diag_scr_888_ws"],["23DD6","diag_scr_fill_ws"],["23DDA","waitshift_striped"],
+    ["23DDE","waitshift"],["23DE4","diag_scr_ckb1_ws"],["23E40","diag_scr_ckb2_ws"],
+    ["23E6A","diag_scr_version"],["23E92","diag_print_ver"],["23EEE","diag_checksum"],
+    ["23F8A","store_reg_to_stack"],["23EC8","diag_print_pd"],["23F9A","diag_calc_checksum"],
+    ["09A24","pd_value"],["24010","hex_byte"],["16EAE","byte_hex"],["09938","hex_to_dec"],
+    ["2541A","diag_serial_num"],["10E5E","get_serial_num"],["23D5A","diag_check_key"],
+    ["2641A","diag_contrast"],["2C58A","diag_8_keytest"],["1F24E","getscancode"],
+    ["2F5EA","getkey"],["25C1A","getkeycode"],["29892","cvt_key"],["0A0E0","setsfr"],
+    ["19808","byte_to_bcd"],["19832","bcd_to_byte"],["08E62","line_draw"],["091FC","pixel_draw"],
+    ["090D2","draw_glyph"],["2EDC8","line_print__call__"],["0996C","str_decompress_print__call__"],
+    ["099C2","str_decompress_print__call1__"],["0904E","char_print_1byte"],["09056","char_print"],
+    ["09238","char_get_14"],["09318","char_get_l14"],["0A16A","zero_KO"],["09DE6","assign_var"],
+    ["08C60","buffer_clear"],["0AC30","ENTER"],["0AC38","LEAVE"],["224DE","LEAVE1"],
+    ["22D66","LEAVE2"],["13D92","LEAVE3"],["2110A","LEAVE4"],["1652C","num_add"],
+    ["16538","num_sub"],["16544","num_mul"],["16550","num_div"],["1D24A","num_add_1"],
+    ["1D236","num_sub_1"],["1D272","num_mul_1"],["1D25E","num_div_1"],["20C46","num_output_print"],
+    ["1D950","num_fromdigit"],["1DC2E","num_frombyte"],["1D898","num_invalid__"],
+    ["1DBE2","num_trunc__"],["1DAF0","num_mulxp__"],["1391A","num_random"],["13A20","num_randint"],
+    ["139D2","num_normalize"],["1DC8A","num_to_byte"],["279B6","num_to_str"],["1DCE4","num_cpy"],
+    ["1D902","num_cmp"],["16844","num_sin"],["1684E","num_cos"],["168E4","num_tan"],
+    ["2AD4C","display_menu"],["093D2","draw_byte"],["2045c","pop xr4,pop xr12"],["1c696","[ea+] = er0"]
+];
+gadgetList.push(["13622","pop qr8"],["1fcf4","pop er4"],["09d3e","pop er2"],
+    ["10e80","pop ea, r6-=1_ne,call 10e6e|pop xr4"],["1216a","pop er0"],
+    ["17b34","pop xr0"],["1622e","pop xr0"]);
+for (let g of gadgetList) addEntry(g[0], normalizeName(g[1]));
+
+const specialNoPopGadgets=new Set(["sp=er14,pop er14,rt","sp=er14,pop qr8","sp=er14,pop qr8,pop qr0",
+    "sp=er14,pop er14","sp=er6,pop er8","sp=er14,pop xr12","sp=er14,pop qr8,pop er6",
+    "sp+=6,pop qr8","sp+=50,pop qr8","sp+=20,pop qr8","sp+=30,pop qr8","sp+=30,pop er14",
+    "sp+=2,r0=0","sp+=20,pop xr12","sp+=10,pop er12","sp+=60,pop xr8","sp+=4,pop xr8",
+    "sp+=64,pop er6,pop qr8","sp+=4,pop qr8,pop xr4","sp+=40,pop qr8,pop xr4",
+    "sp+=60,pop qr8,pop xr4","sp+=50,pop qr8,pop xr4","sp+=50,pop xr4,pop qr8",
+    "sp+=120,pop qr8,pop xr4","sp+=2,pop xr4,pop qr8","sp+=120,pop xr8",
+    "sp+=2,r0=1,pop er8","sp+=32,r2=r0,pop xr8"]);
+
+function getPopSizes(name) {
+    if (!name) return null;
+    let pops=[],regex=/pop\s+([^,]+(?:,[^,]+)*)/gi,match;
+    while ((match=regex.exec(name))!==null) {
+        for (let t of match[1].split(',')) {
+            t=t.trim();
+            if (!t||t==='rt'||t==='pop'||t==='sp') continue;
+            if (t==='ea'||t==='pc') pops.push(2);
+            else if (t==='psw') pops.push(1);
+            else if (t.startsWith('qr')) for(let i=0;i<4;i++) pops.push(2);
+            else if (t.startsWith('xr')) for(let i=0;i<2;i++) pops.push(2);
+            else if (t.startsWith('er')) pops.push(2);
+            else if (t.startsWith('r')) pops.push(1);
+        }
+    }
+    return pops.length?pops:null;
+}
+const MIN_VALID_CALL_ADDR=0x8000;
+function normalizeAddress(addr) {
+    if (addr===0x09c21) return 0x09c20;
+    if (addr===0x0947e) return 0x0947c;
+    if ((addr&1)&&addrToName.has(addr-1)) return addr-1;
+    return addr;
+}
+function hexToBytes(hexStr) {
+    let clean=hexStr.replace(/\s+/g,'');
+    if (!clean) return [];
+    if (clean.length%2) clean=clean.slice(0,-1);
+    let bytes=[];
+    for (let i=0;i<clean.length;i+=2) bytes.push(parseInt(clean.substr(i,2),16));
+    return bytes;
+}
+const keyMap=new Map([[0x0180,"SHIFT"],[0x0280,"ALPHA"],[0x0440,"←"],[0x0880,"→"],[0x0480,"↑"],[0x0840,"↓"],
+    [0x1080,"MENU"],[0x0140,"OTPN"],[0x0240,"CALC"],[0x1040,"∫"],[0x0120,"⁄"],[0x0220,"√"],
+    [0x0420,"x²"],[0x0820,"xˆ"],[0x1020,"log"],[0x2020,"IN"],[0x0110,"(-)"],[0x0210,"ĐỘ"],
+    [0x0410,"x^-1"],[0x0810,"SIN"],[0x1010,"COS"],[0x2010,"TAN"],[0x0108,"STO"],[0x0208,"ENG"],
+    [0x0408,"("],[0x0808,")"],[0x1008,"S<=>D"],[0x2008,"M+"],[0x1004,"AC"],[0x1002,"÷"],[0x1001,"-"],
+    [0x4004,"x10"],[0x4001,"="],[0x4010,"0"],[0x0101,"1"],[0x0201,"2"],[0x0401,"3"],[0x0102,"4"],
+    [0x0202,"5"],[0x0402,"6"],[0x0104,"7"],[0x0204,"8"],[0x0404,"9"],[0x0804,"DEL"],
+    [0x0802,"×"],[0x0801,"+"],[0x4008,"."],[0x4002,"ANS"]]);
+const addrNameMap=new Map([[0x83DA,"adrcvtkey"],[0xD000,"reg0"],[0xD009,"reg0.9"],
+    [0xD110,"modifiers"],[0xD111,"mode"],[0xD112,"submode"],[0xD11A,"num_format"],
+    [0xD11B,"num_format_i"],[0xD11D,"angle_unit"],[0xD138,"draw_mode"],[0xD180,"input_range"],
+    [0xD318,"unstable_char"],[0xD31A,"var_m"],[0xD324,"var_ans"],[0xD32E,"var_a"],[0xD338,"var_b"],
+    [0xD342,"var_c"],[0xD34C,"var_d"],[0xD356,"var_e"],[0xD360,"var_f"],[0xD36A,"var_x"],
+    [0xD374,"var_y"],[0xD37E,"var_preans"],[0xD388,"var_z"],[0xD392,"calc_history"],
+    [0xD139,"current_screen_buffer"],[0xDDD4,"screen_buffer"],[0xD137,"font_size"],
+    [0xD113,"cursor_noflash"],[0xDBD0,"magic_string"]]);
+
+function parseToItems(bytes,startAddrDest,startAddrSrc) {
+    let items=[],offset=0,i=0;
+    while (i<bytes.length) {
+        let ramAddrDest=startAddrDest+offset,ramAddrSrc=startAddrSrc+offset;
+        if (i+3<bytes.length) {
+            let zz=bytes[i],yy=bytes[i+1],third=bytes[i+2],fourth=bytes[i+3];
+            if (third>=0x30&&third<=0x39&&fourth===0x30) {
+                let X=third-0x30,rawAddr=(X<<16)|(yy<<8)|zz;
+                if (rawAddr===0x03030){items.push({type:'data',hexBytes:[zz,yy],value:(yy<<8)|zz,ramAddrDest,ramAddrSrc});i+=2;offset+=2;continue;}
+                if (rawAddr<MIN_VALID_CALL_ADDR){
+                    items.push({type:'data',hexBytes:[zz,yy],value:(yy<<8)|zz,ramAddrDest,ramAddrSrc});offset+=2;
+                    items.push({type:'data',hexBytes:[third,fourth],value:(fourth<<8)|third,ramAddrDest:startAddrDest+offset,ramAddrSrc:startAddrSrc+offset});
+                    i+=4;offset+=2;continue;
+                }
+                let fa=normalizeAddress(rawAddr),nm=addrToName.get(fa);
+                items.push({type:'call',hexBytes:[zz,yy,third,fourth],addr:fa,name:nm||null,ramAddrDest,ramAddrSrc});
+                i+=4;offset+=4;
+                if (nm&&!specialNoPopGadgets.has(nm)){
+                    let ps=getPopSizes(nm);
+                    if (ps&&ps.length>0){
+                        let tot=ps.reduce((a,b)=>a+b,0);
+                        if (i+tot<=bytes.length){
+                            for (let sz of ps){
+                                let db=bytes.slice(i,i+sz),val=0;
+                                for (let j=0;j<sz;j++) val|=(db[j]<<(8*j));
+                                items.push({type:'data',hexBytes:db,value:val,ramAddrDest:startAddrDest+offset,ramAddrSrc:startAddrSrc+offset});
+                                i+=sz;offset+=sz;
+                            }
+                            continue;
+                        }
+                    }
+                }
+                continue;
+            }
+        }
+        if (i+1<bytes.length){
+            items.push({type:'data',hexBytes:[bytes[i],bytes[i+1]],value:(bytes[i+1]<<8)|bytes[i],ramAddrDest,ramAddrSrc});
+            i+=2;offset+=2;
+        } else {
+            items.push({type:'data',hexBytes:[bytes[i]],value:bytes[i],ramAddrDest,ramAddrSrc});
+            i++;offset++;
+        }
+    }
+    return items;
+}
+function resequenceLabels(items){
+    let map=new Map(),c=1;
+    for (let it of items) if (it.type==='label'&&!map.has(it.label)) map.set(it.label,`label${c++}`);
+    for (let it of items){
+        if (it.type==='label') it.label=map.get(it.label)||it.label;
+        if (it.type==='data'&&it.labelRef) it.labelRef.label=map.get(it.labelRef.label)||it.labelRef.label;
+    }
+    return items;
+}
+function addLabelReferences(items,sDest,sSrc){
+    let ai=new Map();
+    for (let idx=0;idx<items.length;idx++){ai.set(items[idx].ramAddrDest,idx);ai.set(items[idx].ramAddrSrc,idx);}
+    let lc=1,lmap=new Map();
+    for (let it of items){
+        if (it.type==='data'&&it.hexBytes.length===2&&ai.has(it.value)){
+            let ti=ai.get(it.value),tit=items[ti];
+            let isSrc=tit.ramAddrSrc===it.value?true:tit.ramAddrDest===it.value?false:null;
+            if (isSrc===null) continue;
+            if (!lmap.has(it.value)) lmap.set(it.value,`label${lc++}`);
+            it.labelRef={label:lmap.get(it.value),isSrc,originalValue:it.value};
+        }
+    }
+    let li=[];
+    for (let [addr,ln] of lmap.entries()){let ti=ai.get(addr);if(ti!==undefined)li.push({type:'label',label:ln,insertBefore:ti,addr});}
+    li.sort((a,b)=>b.insertBefore-a.insertBefore);
+    for (let l of li) items.splice(l.insertBefore,0,{type:'label',label:l.label,addr:l.addr});
+    let merged=false;
+    do {
+        merged=false;
+        for (let i=0;i<items.length-1;i++){
+            if (items[i].type==='label'&&items[i+1].type==='label'){
+                let keep=items[i].label,rem=items[i+1].label;
+                items.splice(i+1,1);
+                for (let it of items) if (it.type==='data'&&it.labelRef&&it.labelRef.label===rem) it.labelRef.label=keep;
+                merged=true;break;
+            }
+        }
+    } while (merged);
+    return items;
+}
+function getDataDisplay(it){
+    if (it.labelRef){const r=it.labelRef;return r.isSrc?`adr_of [+4784] ${r.label}`:`adr_of ${r.label}`;}
+    let v=it.hexBytes.length===2?`0x${it.value.toString(16).toUpperCase().padStart(4,'0')}`:`0x${it.value.toString(16).toUpperCase().padStart(2,'0')}`;
+    if (it.hexBytes.length===2&&keyMap.has(it.value)) v+=` # [${keyMap.get(it.value)}]`;
+    if (it.hexBytes.length===2&&addrNameMap.has(it.value)) v+=` # ${addrNameMap.get(it.value)}`;
+    return v;
+}
+function fmtA(n){return '0x'+n.toString(16).toLowerCase();}
+function renderItems(items,container){
+    container.innerHTML='';
+    const frag=document.createDocumentFragment();
+    for (let it of items){
+        const d=document.createElement('div');d.className='gadget-line';
+        if (it.type==='label'){
+            d.style.paddingLeft='0';
+            const s=document.createElement('span');s.className='d-label';s.textContent=`${it.label}:`;d.appendChild(s);
+            const loc=document.createElement('span');loc.className='d-loc';loc.textContent=fmtA(it.addr);d.appendChild(loc);
+        } else {
+            d.style.paddingLeft='14px';
+            const badge=document.createElement('span');badge.className='hex-badge';
+            badge.textContent=it.hexBytes.map(b=>b.toString(16).padStart(2,'0')).join(' ');d.appendChild(badge);
+            const arr=document.createElement('span');arr.className='d-arrow';arr.textContent='➜';d.appendChild(arr);
+            if (it.type==='call'){
+                const as=it.addr.toString(16).toUpperCase().padStart(5,'0');
+                const a=document.createElement('span');a.className='d-addr';a.textContent=as;d.appendChild(a);
+                const ns=document.createElement('span');
+                if (it.name){ns.className='d-name';ns.textContent=`→ ${it.name}`;}
+                else{ns.className='d-unk';ns.textContent=`→ call ${as}`;}
+                d.appendChild(ns);
+            } else {
+                const ds=document.createElement('span');ds.className='d-data';ds.textContent=`→ ${getDataDisplay(it)}`;d.appendChild(ds);
+            }
+            const loc=document.createElement('span');loc.className='d-loc';
+            loc.textContent=`${fmtA(it.ramAddrDest)} ${fmtA(it.ramAddrSrc)}`;d.appendChild(loc);
+        }
+        frag.appendChild(d);
+    }
+    container.appendChild(frag);
+}
+
+const hexInput=document.getElementById('hexInput');
+const decompOut=document.getElementById('decompOutput');
+const dStatus=document.getElementById('dStatusMsg');
+const dStats=document.getElementById('dStatsMsg');
+const decompBtn=document.getElementById('decompBtn');
+const dClearBtn=document.getElementById('dClearBtn');
+const dCopyBtn=document.getElementById('dCopyBtn');
+const dPasteBtn=document.getElementById('dPasteBtn');
+const startAddrIn=document.getElementById('startAddrInput');
+const backupAddrIn=document.getElementById('backupAddrInput');
+const dModeDetail=document.getElementById('dModeDetail');
+const dModeSimple=document.getElementById('dModeSimple');
+let dItems=[],dByteCount=0,dMode='detail';
+
+function dSetStatus(t,err=false){dStatus.textContent=t;dStatus.style.color=err?'var(--red)':'var(--dim)';}
+
+function formatSimple(){
+    return dItems.map(it=>{
+        if (it.type==='label') return `${it.label}:`;
+        if (it.type==='call') return `  ${it.name||'call '+it.addr.toString(16).toUpperCase().padStart(5,'0')}`;
+        return `  ${getDataDisplay(it)}`;
+    }).join('\n');
+}
+
+function refreshDecomp(){
+    if (!dItems.length) return;
+    if (dMode==='detail') renderItems(dItems,decompOut);
+    else { decompOut.innerText=formatSimple(); }
+}
+
+dModeDetail.onclick=()=>{
+    dMode='detail';
+    dModeDetail.classList.add('active'); dModeSimple.classList.remove('active');
+    refreshDecomp();
+};
+dModeSimple.onclick=()=>{
+    dMode='simple';
+    dModeSimple.classList.add('active'); dModeDetail.classList.remove('active');
+    refreshDecomp();
+};
+
+decompBtn.onclick=()=>{
+    const raw=hexInput.value.trim();
+    if (!raw){dSetStatus('> no input_',true);return;}
+    let dest=parseInt(startAddrIn.value.trim(),16),src=parseInt(backupAddrIn.value.trim(),16);
+    if (isNaN(dest)) dest=0xd730;
+    if (isNaN(src)) src=0xe9e0;
+    dSetStatus('> decompiling…');
+    setTimeout(()=>{
+        try {
+            let bytes=hexToBytes(raw);
+            if (!bytes.length) throw new Error('Invalid hex');
+            dByteCount=bytes.length;
+            let items=parseToItems(bytes,dest,src);
+            items=addLabelReferences(items,dest,src);
+            items=resequenceLabels(items);
+            dItems=items;
+            refreshDecomp();
+            dStats.textContent=`bytes: ${dByteCount} | items: ${items.length}`;
+            dSetStatus(`> ok — ${items.length} items_`);
+        } catch(e){
+            decompOut.innerHTML=`<span style="color:var(--red)">// Error: ${e.message}</span>`;
+            dSetStatus('> error_',true);dStats.textContent='';
+        }
+    },10);
+};
+dCopyBtn.onclick=()=>{
+    const txt=formatSimple();
+    if (!txt){dSetStatus('> nothing to copy_',true);return;}
+    navigator.clipboard.writeText(txt).then(()=>dSetStatus('> copied_')).catch(()=>dSetStatus('> copy failed_',true));
+};
+dClearBtn.onclick=()=>{
+    hexInput.value='';
+    decompOut.innerHTML='<span class="tok-note">// paste hex and press [ DECOMPILE ]</span>';
+    dItems=[];dByteCount=0;dStats.textContent='';dSetStatus('> cleared_');
+};
+dPasteBtn.onclick=async()=>{
+    try{hexInput.value=await navigator.clipboard.readText();dSetStatus('> pasted_');}
+    catch{dSetStatus('> clipboard error_',true);}
+};
+})();
 </script>
 </body>
 </html>
