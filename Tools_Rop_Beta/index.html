@@ -1,1 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>580VNX ROP Toolkit · Handsome Boy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
 
+  <div class="header">
+    <h1>580VNX <span>ROP</span> TOOLKIT</h1>
+    <div class="credit">by <b>@liemdeptraiqua</b> · Handsome Boy</div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabCompile">[ COMPILER ]</button>
+    <button class="tab-btn" id="tabDecomp">[ DECOMPILER ]</button>
+  </div>
+
+  <!-- COMPILER SECTION -->
+  <div id="sectionCompile">
+    <div class="toolbar">
+      <button id="compileBtn" disabled>[ COMPILE ]</button>
+      <button id="pasteBtn">[ PASTE ]</button>
+      <button id="clearBtn">[ CLEAR ]</button>
+      <button id="copyHexBtn">[ COPY HEX ]</button>
+      <button id="patchDisasBtn" style="color:var(--green);border-color:rgba(57,255,20,.3)" title="Patch disas.txt labels to match gadget names">[ PATCH DISAS ]</button>
+      <span id="pyLabel" style="color:var(--dim);font-size:.7rem;margin-left:6px">&#9203; loading...</span>
+    </div>
+    <div class="toolbar" id="ghBar" style="display:none">
+      <span style="color:var(--dimmer);font-size:.65rem;letter-spacing:.1em">// github</span>
+      <input id="ghRepo" placeholder="owner/repo" style="background:var(--bg);border:1px solid var(--border2);color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:.72rem;padding:4px 8px;outline:none;width:160px">
+      <input id="ghToken" type="password" placeholder="ghp_token..." style="background:var(--bg);border:1px solid var(--border2);color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:.72rem;padding:4px 8px;outline:none;width:180px">
+      <button id="ghSaveBtn" style="font-size:.7rem;padding:4px 10px">[ SAVE ]</button>
+      <button id="ghCommitBtn" style="color:var(--green);border-color:rgba(57,255,20,.3);font-size:.7rem;padding:4px 10px" disabled>[ COMMIT DISAS ]</button>
+      <span id="ghStatus" style="font-size:.68rem;color:var(--dimmer)"></span>
+    </div>
+    <div class="load-bar run" id="pyBar"><div class="fill" id="pyFill"></div></div>
+    <div class="examples-row">
+      <span class="ex-label">// examples</span>
+      <button class="ex-btn" data-ex="hello">hello_world</button>
+      <button class="ex-btn" data-ex="waitshift">waitshift</button>
+      <button class="ex-btn" data-ex="drawline">draw_line</button>
+      <button class="ex-btn" data-ex="loop">loop_goto</button>
+    </div>
+    <div class="main-border">
+      <div class="panels">
+        <div class="panel">
+          <span class="panel-label">// asm source</span>
+          <textarea id="asmInput" spellcheck="false" placeholder="org 0xe9e0&#10;&#10;setlr&#10;xr0 = 0x1111, adr_of text&#10;printline&#10;render.ddd4&#10;&#10;text:&#10;hex 48 65 6c 6c 6f&#10;0x00"></textarea>
+        </div>
+        <div class="panel">
+          <span class="panel-label">// output</span>
+          <div id="outputBox"><span class="tok-note">// ready &#8212; press [ COMPILE ] or ctrl+enter</span></div>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-pill" id="statusMsg">&gt; ready_</div>
+        <div class="stats-pill" id="statsMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECOMPILER SECTION -->
+  <div id="sectionDecomp" style="display:none">
+    <div class="toolbar">
+      <button id="decompBtn">[ DECOMPILE ]</button>
+      <button id="dPasteBtn">[ PASTE ]</button>
+      <button id="dClearBtn">[ CLEAR ]</button>
+      <button id="dCopyBtn">[ COPY ]</button>
+      <div class="fmt-switch">
+        <button class="fmt-btn active" id="dDetail">DETAILED</button>
+        <button class="fmt-btn" id="dSimple">SIMPLE</button>
+      </div>
+      <span style="color:var(--dim);font-size:.7rem;margin-left:6px">dest:</span>
+      <input class="addr-inp" id="addrDest" value="d730" maxlength="6">
+      <span style="color:var(--dim);font-size:.7rem">src:</span>
+      <input class="addr-inp" id="addrSrc" value="e9e0" maxlength="6">
+    </div>
+    <div class="main-border">
+      <div class="panels">
+        <div class="panel">
+          <span class="panel-label">// hex input</span>
+          <textarea id="hexInput" spellcheck="false" placeholder="d0 08 33 30 e0 a0 30 30 ..."></textarea>
+        </div>
+        <div class="panel">
+          <span class="panel-label">// decompiled output</span>
+          <div id="decompOut"><span class="tok-note">// paste hex and press [ DECOMPILE ]</span></div>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-pill" id="dStatus">&gt; ready_</div>
+        <div class="stats-pill" id="dStats"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script id="charTable" type="application/json">
+{"48": "30", "49": "31", "50": "32", "51": "33", "52": "34", "53": "35", "54": "36", "55": "37", "56": "38", "57": "39", "65": "41", "66": "42", "67": "43", "68": "44", "69": "45", "70": "46", "71": "47", "72": "48", "73": "49", "74": "4A", "75": "4B", "76": "4C", "77": "4D", "78": "4E", "79": "4F", "80": "50", "81": "51", "82": "52", "83": "53", "84": "54", "85": "55", "86": "56", "87": "57", "88": "58", "89": "59", "90": "5A", "97": "61", "98": "62", "99": "63", "100": "64", "101": "65", "102": "66", "103": "67", "104": "68", "105": "69", "106": "6A", "107": "6B", "108": "6C", "109": "6D", "110": "6E", "111": "6F", "112": "70", "113": "71", "114": "72", "115": "73", "116": "74", "117": "75", "118": "76", "119": "77", "120": "78", "121": "79", "122": "7A", "193": "F451", "225": "F471", "192": "F450", "224": "F470", "7842": "F454", "7843": "F474", "195": "F453", "227": "F473", "7840": "F410", "7841": "F465", "258": "F455", "259": "F475", "7854": "F411", "7855": "F431", "7856": "F412", "7857": "F432", "7858": "F490", "7859": "F456", "7860": "F491", "7861": "F457", "7862": "F413", "7863": "F433", "194": "F452", "226": "F472", "7844": "F414", "7845": "F434", "7846": "F415", "7847": "F435", "7848": "F416", "7849": "F436", "7850": "F492", "7851": "F477", "7852": "F417", "7853": "F437", "201": "F459", "233": "F479", "200": "F458", "232": "F478", "7866": "F45B", "7867": "F47B", "7868": "F418", "7869": "F438", "7864": "F419", "7865": "F439", "202": "F45A", "234": "F47A", "7870": "F41A", "7871": "F43A", "7872": "F41B", "7873": "F43B", "7874": "F41C", "7875": "F43C", "7876": "F41D", "7877": "F43D", "7878": "F41E", "7879": "F43E", "205": "F45D", "237": "F47D", "204": "F45C", "236": "F47C", "7880": "F42B", "7881": "F47F", "296": "F45E", "297": "F47E", "7882": "F428", "7883": "F448", "211": "F463", "243": "F483", "210": "F462", "242": "F482", "7886": "F429", "7887": "F486", "213": "F430", "245": "F485", "7884": "F42A", "7885": "F487", "212": "F464", "244": "F484", "7888": "F41F", "7889": "F43F", "7890": "F420", "7891": "F440", "7892": "F421", "7893": "F441", "7894": "F422", "7895": "F442", "7896": "F423", "7897": "F445", "416": "F444", "417": "F44D", "7898": "F425", "7899": "F44E", "7900": "F426", "7901": "F446", "7902": "F427", "7903": "F447", "7904": "F443", "7905": "F46E", "7906": "F424", "7907": "F48E", "218": "F46A", "250": "F48A", "217": "F469", "249": "F489", "7910": "F42C", "7911": "F48C", "360": "F42D", "361": "F48B", "7908": "F42E", "7909": "F488", "431": "F44F", "432": "F46F", "7912": "F44A", "7913": "F461", "7914": "F44B", "7915": "F467", "7916": "F44C", "7917": "F468", "7918": "F48F", "7919": "F476", "7920": "F449", "7921": "F481", "221": "F46D", "253": "F48D", "7922": "F42F", "7923": "F45F", "7926": "F493", "7927": "F466", "7928": "F494", "7929": "F46B", "7924": "F495", "7925": "F46C", "272": "F460", "273": "F480", "126": "20", "64": "40", "95": "5F", "38": "1A", "45": "2D", "43": "2B", "40": "28", "41": "29", "47": "2F", "42": "2A", "39": "27", "58": "3A", "33": "21", "63": "3F", "124": "7C", "8730": "98", "247": "26", "215": "24", "94": "5E", "176": "85", "123": "7B", "125": "7D", "91": "5B", "93": "5D", "37": "25", "46": "2E", "44": "2C"}
+</script>
+<script src="main.js"></script>
+</body>
+</html>
