@@ -65,7 +65,7 @@ def norm(a):
 def popsz(name):
     if not name: return None
     pops = []
-    for m in re.finditer(r'pop\s+([^,]+(?:,[^,]+)*)', name):
+    for m in re.finditer(r'pop\\s+([^,]+(?:,[^,]+)*)', name):
         for t in m.group(1).split(','):
             t = t.strip()
             if not t or t in ('rt','pop','sp'): continue
@@ -205,49 +205,10 @@ let dLastSimple  = '';
 let dMode        = 'detail';
 
 const EXAMPLES = {
-  hello:     `org 0xe9e0
-
-setlr
-buffer_clear
-xr0 = 0x1111, adr_of text
-printline
-render.ddd4
-text:
-hex 48 65 6c 6c 6f 20 35 38 30 56 4e 58
-0x00`,
-  waitshift: `org 0xe9e0
-
-setlr
-buffer_clear
-waitshift
-xr0 = 0x1111, adr_of msg
-printline
-render.ddd4
-msg:
-hex 50 72 65 73 73 20 53 48 49 46 54
-0x00`,
-  drawline:  `org 0xe9e0
-
-setlr
-xr0=0x0101,0x3131
-line_draw
-render.ddd4`,
-  loop:      `org 0xe9e0
-
-setlr
-buffer_clear
-  xr0 = 0x1111, adr_of msg
-  printline
-  render.ddd4
-loop:
-xr0=0xD630,0xD184
-BL strcpy
-er14=0xD62E
-sp=er14,pop er14
-
-msg:
-hex 4c 6f 6f 70 69 6e 67
-0x00`,
+  hello:     `org 0xe9e0\n\nsetlr\nxr0 = 0x1111, adr_of text\nprintline\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4\n\ntext:\nhex 48 65 6c 6c 6f 20 35 38 30 56 4e 58\n0x00`,
+  waitshift: `org 0xe9e0\n\nsetlr\nxr0 = 0x1111, adr_of msg\nprintline\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4\n\nmsg:\nhex 50 72 65 73 73 20 53 48 49 46 54\n0x00`,
+  drawline:  `org 0xe9e0\n\nsetlr\ner0 = 0x0000\ner2 = 0x00EF\nr0 = 0x00\nr1 = 0x08\nline_draw\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4`,
+  loop:      `org 0xe9e0\n\nsetlr\n\nloop:\n  xr0 = 0x1111, adr_of msg\n  printline\n  render.ddd4\n  waitshift\n  buffer_clear\n  render.ddd4\n  goto loop\n\nmsg:\nhex 4c 6f 6f 70 69 6e 67\n0x00`,
 };
 
 // ═══════════════════════════════════════════════
@@ -263,8 +224,6 @@ function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 
 // ═══════════════════════════════════════════════
 // PYODIDE BOOTSTRAP
-// Sequence: load pyodide → run compiler Python → run DECOMP_PY → expose instance
-// Only then does loadDataFiles() inject _addr_to_name / _disas_label
 // ═══════════════════════════════════════════════
 async function bootPyodide() {
   const lbl  = $('pyLabel');
@@ -274,46 +233,30 @@ async function bootPyodide() {
   const setF = w => { fill.style.width = w; };
 
   try {
-    setL('⏳ fetching pyodide (~20MB)...');
+    setL('⏳ fetching pyodide...');
     setF('10%');
-
-    // Try jsdelivr first, fallback to unpkg
-    const CDN_URLS = [
-      'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js',
-      'https://unpkg.com/pyodide@0.26.2/full/pyodide.js',
-    ];
-    const INDEX_URLS = [
-      'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/',
-      'https://unpkg.com/pyodide@0.26.2/full/',
-    ];
-
-    let cdnIndex = 0;
     await new Promise((res, rej) => {
       if (window.loadPyodide) { res(); return; }
-      const tryLoad = (i) => {
-        if (i >= CDN_URLS.length) { rej(new Error('All CDNs failed — check internet connection')); return; }
-        setL(`⏳ fetching pyodide (CDN ${i+1}/${CDN_URLS.length})...`);
-        const s = document.createElement('script');
-        s.src = CDN_URLS[i];
-        s.onload = () => { cdnIndex = i; res(); };
-        s.onerror = () => { setTimeout(() => tryLoad(i+1), 500); };
-        document.head.appendChild(s);
-      };
-      tryLoad(0);
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+      s.onload = res;
+      s.onerror = () => rej(new Error('Failed to load pyodide.js'));
+      document.head.appendChild(s);
     });
 
-    setF('30%'); setL('⏳ starting python (may take 30s)...');
+    setF('30%'); setL('⏳ initialising python...');
     bar.classList.remove('run');
     pyodide = await window.loadPyodide({
-      indexURL: INDEX_URLS[cdnIndex]
+      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'
     });
 
-    setF('55%'); setL('⏳ loading compiler...');
+    setF('60%'); setL('⏳ setting up compiler...');
     const charTable = JSON.parse($('charTable').textContent);
     pyodide.globals.set('_CHAR_TABLE', pyodide.toPy(charTable));
 
     await pyodide.runPythonAsync(`
 import re, sys
+from functools import lru_cache
 
 max_call_adr = 0x3ffff
 npress = [1] * 256
@@ -337,7 +280,7 @@ def to_lc(s): return s.lower()
 
 def canon(st):
     st = st.strip()
-    st = re.sub(r' *([^a-z0-9]) *', r'\1', st)
+    st = re.sub(r' *([^a-z0-9]) *', r'\\1', st)
     return st
 
 def del_comment(line):
@@ -396,13 +339,8 @@ def process(line):
         rest = line[4:].strip()
         try: adr = int(rest, 16)
         except ValueError:
-            key = re.sub(r'\s+', ' ', rest.strip().lower())
-            key = re.sub(r'^bl ', 'bl', key)
-            entry = commands.get(key)
-            if entry is None:
-                close = [k for k in commands if k.startswith(key[:4])][:5]
-                raise AssertionError(f'Unknown command: {repr(key)}'
-                    + (f' — similar: {close}' if close else ''))
+            entry = commands.get(rest)
+            if entry is None: raise AssertionError(f'Unknown command: {repr(rest)}')
             adr, tags = entry
             for tag in tags:
                 if tag.startswith('warning'): note(tag+'\\n')
@@ -426,11 +364,7 @@ def process(line):
         lbl, off = line.split('+')
         process(f'0x{datalabels[lbl]+int(off,0):04x}'); return
     if line in commands:
-        process('call ' + line); return
-    # try normalized key in case of whitespace/case mismatch
-    _nline = re.sub(r'^bl ', 'bl', re.sub(r'\s+', ' ', line.strip()))
-    if _nline != line and _nline in commands:
-        process('call ' + _nline); return
+        process('call ' + to_lc(line)); return
     if line.startswith('pr_length'):
         pr_len_cmds.append(len(result)); result.extend((0,0)); return
     if line.startswith('str'):
@@ -514,8 +448,6 @@ def finish():
 
 def compile_program(src_text):
     reset_state()
-    if not commands:
-        raise RuntimeError('commands dict EMPTY — data files not loaded. Check status bar shows gadget count > 0')
     for line in src_text.split('\\n'):
         line = canon(del_comment(line)).lower()
         try: process(line)
@@ -538,7 +470,7 @@ def compile_program(src_text):
 print("Compiler ready")
 `);
 
-    setF('80%'); setL('⏳ loading decompiler...');
+    setF('85%'); setL('⏳ setting up decompiler...');
     await pyodide.runPythonAsync(DECOMP_PY);
     dpReady = true;
 
@@ -557,7 +489,6 @@ print("Compiler ready")
     return;
   }
 
-  // Expose after DECOMP_PY has run — loadDataFiles checks this
   window._pyReady = true;
   loadDataFiles();
 }
@@ -566,23 +497,12 @@ bootPyodide();
 
 // ═══════════════════════════════════════════════
 // DATA FILE LOADER
-// Fetches ./gadgets, ./labels, ./disas.txt
-// Cache-busted to avoid stale GitHub Pages cache
 // ═══════════════════════════════════════════════
-const _CACHE_BUST = '?v=' + Date.now();
-
 async function fetchText(path) {
-  // Try with cache-bust first, then without (for localhost)
-  for (const url of [path + _CACHE_BUST, path]) {
-    try {
-      const r = await fetch(url, {
-        cache: 'no-store',
-        headers: { 'Accept': 'text/plain, */*' }
-      });
-      if (r.ok) return await r.text();
-    } catch {}
-  }
-  return null;
+  try {
+    const r = await fetch(path);
+    return r.ok ? await r.text() : null;
+  } catch { return null; }
 }
 
 function parseGadgets(text) {
@@ -597,7 +517,6 @@ function parseGadgets(text) {
       .replace(/\s*=\s*/g,'=').replace(/\s*\+=\s*/g,'+=')
       .replace(/\s*-=\s*/g,'-=').replace(/\s*,\s*/g,',')
       .replace(/\s+/g,' ').toLowerCase();
-    // "bl strcpy" -> "blstrcpy"
     name = name.replace(/^bl\s+/, 'bl');
     if (!isNaN(addr) && name) out[name] = { addr, tags: [] };
   }
@@ -623,28 +542,19 @@ function parseLabels(text) {
 }
 
 function parseDisas(text) {
-  // Returns:
-  //   addrToLabel: { addr -> labelName }  (first addr wins)
-  //   labelToAddrs: { labelName -> [addr, ...] }
-  const addrToLabel = {};
-  const labelToAddrs = {};
+  const map = {};
   let curLabel = null;
   for (const raw of text.split(/\r?\n/)) {
     const lm = raw.match(/^([a-zA-Z_][a-zA-Z0-9_.]*):/);
-    if (lm) {
-      curLabel = lm[1];
-      if (!labelToAddrs[curLabel]) labelToAddrs[curLabel] = [];
-      continue;
-    }
+    if (lm) { curLabel = lm[1]; continue; }
     if (!curLabel) continue;
     const am = raw.match(/;\s*([0-9A-Fa-f]{5})\s*\|/);
     if (am) {
       const addr = parseInt(am[1], 16);
-      if (!(addr in addrToLabel)) addrToLabel[addr] = curLabel;
-      labelToAddrs[curLabel].push(addr);
+      if (!(addr in map)) map[addr] = curLabel;
     }
   }
-  return { addrToLabel, labelToAddrs };
+  return map;
 }
 
 async function loadDataFiles() {
@@ -662,75 +572,21 @@ async function loadDataFiles() {
     Object.assign(datalabels, r.datalabels);
   }
 
-  // Always include setlr_pc
-  commands['setlr_pc'] = { addr: 0x308D0, tags: [] };
-
-  // Build disas map: addr -> { label, known }
-  // Auto-rename: if a gadget's addr appears anywhere in a disas block,
-  // rename that block's label to the gadget name so ALL addrs in that
-  // block resolve to the gadget name (not just the exact entry point).
   let disasMap = {};
   if (disasTxt) {
-    const { addrToLabel, labelToAddrs } = parseDisas(disasTxt);
-
-    // Build reverse: disas labelName -> gadget name (if any gadget addr hits this block)
-    // addrToGadgetName: disas addr -> gadget name
-    const addrToGadget = {};
-    for (const [gName, gData] of Object.entries(commands)) {
-      const gAddr = gData.addr;
-      // Check exact addr and addr^1
-      for (const probe of [gAddr, gAddr ^ 1]) {
-        const disasLabel = addrToLabel[probe];
-        if (disasLabel) {
-          // This gadget's addr is inside disas block `disasLabel`
-          // Map ALL addrs of that block -> gadget name
-          for (const a of (labelToAddrs[disasLabel] || [])) {
-            if (!(a in addrToGadget)) addrToGadget[a] = gName;
-          }
-          break;
-        }
-      }
-    }
-
-    // Build final disasMap: addr -> { label, known }
-    for (const [addrStr, disasLabel] of Object.entries(addrToLabel)) {
-      const addr = parseInt(addrStr);
-      const gadgetName = addrToGadget[addr];
-      if (gadgetName) {
-        // Gadget exists -> known, use gadget name
-        disasMap[addrStr] = { label: gadgetName, known: true };
-      } else {
-        // No gadget covers this addr -> unknown, use disas label
-        const known = disasLabel.toLowerCase() in commands;
-        disasMap[addrStr] = { label: disasLabel, known };
-      }
+    const raw = parseDisas(disasTxt);
+    for (const [addrStr, labelName] of Object.entries(raw)) {
+      disasMap[addrStr] = {
+        label: labelName,
+        known: (labelName.toLowerCase() in commands)
+      };
     }
   }
 
-  // Save raw disas text for patching later
-  window._rawDisasTxt = disasTxt || '';
-  // Save rename map: old disas label -> new gadget name (only changed ones)
-  window._disasRenameMap = {};
-  if (disasTxt) {
-    const { addrToLabel, labelToAddrs } = parseDisas(disasTxt);
-    for (const [gName, gData] of Object.entries(commands)) {
-      const gAddr = gData.addr;
-      for (const probe of [gAddr, gAddr ^ 1]) {
-        const disasLabel = addrToLabel[probe];
-        if (disasLabel && disasLabel.toLowerCase() !== gName.toLowerCase()) {
-          window._disasRenameMap[disasLabel] = gName;
-          break;
-        }
-      }
-    }
-  }
+  commands['setlr_pc'] = { addr: 0x308D0, tags: [] };
 
   if (!gadgetsTxt && !labelsTxt) {
-    setStatus('> ⚠ gadgets/labels not found — check console for details', true);
-    $('pyLabel').textContent = '⚠ data files missing';
-    console.error('loadDataFiles: could not fetch gadgets or labels from', window.location.href);
-    // Schedule retry in 3s in case it was a transient network error
-    setTimeout(loadDataFiles, 3000);
+    setStatus('> ⚠ gadgets/labels not found — place files next to index.html', true);
     return;
   }
 
@@ -738,24 +594,15 @@ async function loadDataFiles() {
   const nDl  = Object.keys(datalabels).length;
   const nDis = Object.keys(disasMap).length;
 
-  // Inject into compiler
   pyodide.globals.set('_CMD_DATA', pyodide.toPy({ commands, datalabels }));
   await pyodide.runPythonAsync(`
 _d = _CMD_DATA
-
-def _norm_key(k):
-    k = k.strip().lower()
-    k = re.sub(r'\s+', ' ', k)
-    k = re.sub(r'^bl ', 'bl', k)
-    return k
-
-commands   = {_norm_key(k): (v['addr'], tuple(v['tags'])) for k,v in _d['commands'].items()}
+commands   = {k: (v['addr'], tuple(v['tags'])) for k,v in _d['commands'].items()}
 datalabels = dict(_d['datalabels'])
 print(f"Commands: {len(commands)}, Datalabels: {len(datalabels)}")
 `);
   $('compileBtn').disabled = false;
 
-  // Inject into decompiler (DECOMP_PY already ran, so _addr_to_name/_disas_label exist)
   const cdJson = JSON.stringify({ commands, datalabels });
   pyodide.globals.set('_DECOMP_CD_JSON', cdJson);
   pyodide.globals.set('_DISAS_MAP_JS', pyodide.toPy(disasMap));
@@ -777,7 +624,7 @@ for _k, _v in _DISAS_MAP_JS.items():
 print(f"Decompiler: {len(_addr_to_name)} addr entries, {len(_disas_label)} disas entries")
 `);
 
-  setStatus(`> ${nCmd} gadgets | ${nDl} datalabels | ${nDis} disas | v2.1_`);
+  setStatus(`> ${nCmd} gadgets | ${nDl} datalabels | ${nDis} disas_`);
 }
 
 // ═══════════════════════════════════════════════
@@ -822,133 +669,6 @@ async function doCompile() {
 }
 
 $('compileBtn').onclick = doCompile;
-
-// ═══════════════════════════════════════════════
-// PATCH DISAS + GITHUB COMMIT
-// ═══════════════════════════════════════════════
-
-// Build patched disas text from rename map
-function buildPatchedDisas() {
-  const raw = window._rawDisasTxt || '';
-  const renameMap = window._disasRenameMap || {};
-  if (!raw || !Object.keys(renameMap).length) return { patched: raw, changes: 0 };
-  let patched = raw;
-  for (const [oldName, newName] of Object.entries(renameMap)) {
-    const esc2 = oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    patched = patched.replace(new RegExp(`^(${esc2}):`, 'gm'), `${newName}:`);
-  }
-  return { patched, changes: Object.keys(renameMap).length };
-}
-
-function patchDisas() {
-  const raw = window._rawDisasTxt;
-  if (!raw) { setStatus('> ⚠ disas.txt not loaded', true); return; }
-  const { patched, changes } = buildPatchedDisas();
-  if (changes === 0) { setStatus('> disas already up to date_'); return; }
-
-  // Download
-  const blob = new Blob([patched], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'disas.txt'; a.click();
-  URL.revokeObjectURL(url);
-
-  const list = Object.entries(window._disasRenameMap).map(([o,n])=>`${o}→${n}`).join(', ');
-  setStatus(`> downloaded patched disas (${changes} renames: ${list})_`);
-
-  // Show GitHub bar for easy commit
-  $('ghBar').style.display = '';
-}
-
-// Load saved GitHub settings
-(function() {
-  const repo  = localStorage.getItem('gh_repo')  || '';
-  const token = localStorage.getItem('gh_token') || '';
-  if ($('ghRepo'))  $('ghRepo').value  = repo;
-  if ($('ghToken')) $('ghToken').value = token;
-  if (repo && token) $('ghCommitBtn').disabled = false;
-})();
-
-$('ghSaveBtn').onclick = () => {
-  const repo  = $('ghRepo').value.trim();
-  const token = $('ghToken').value.trim();
-  if (!repo || !token) { $('ghStatus').textContent = '⚠ fill both fields'; return; }
-  localStorage.setItem('gh_repo',  repo);
-  localStorage.setItem('gh_token', token);
-  $('ghCommitBtn').disabled = false;
-  $('ghStatus').textContent = '✓ saved';
-  $('ghStatus').style.color = 'var(--green)';
-};
-
-$('ghCommitBtn').onclick = async () => {
-  const repo  = $('ghRepo').value.trim()  || localStorage.getItem('gh_repo')  || '';
-  const token = $('ghToken').value.trim() || localStorage.getItem('gh_token') || '';
-  if (!repo || !token) {
-    $('ghStatus').textContent = '⚠ need owner/repo and token';
-    $('ghStatus').style.color = 'var(--red)'; return;
-  }
-
-  const { patched, changes } = buildPatchedDisas();
-  if (!patched) { $('ghStatus').textContent = '⚠ no disas loaded'; return; }
-
-  $('ghCommitBtn').disabled = true;
-  $('ghStatus').textContent = '⏳ committing...';
-  $('ghStatus').style.color = 'var(--dim)';
-
-  try {
-    const apiBase = `https://api.github.com/repos/${repo}/contents/disas.txt`;
-    const headers = {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    };
-
-    // Get current file SHA (needed for update)
-    let sha = null;
-    const getRes = await fetch(apiBase, { headers });
-    if (getRes.ok) {
-      const info = await getRes.json();
-      sha = info.sha;
-    } else if (getRes.status !== 404) {
-      throw new Error(`GET failed: ${getRes.status} ${getRes.statusText}`);
-    }
-
-    // Encode content as base64
-    const b64 = btoa(unescape(encodeURIComponent(patched)));
-    const renames = Object.entries(window._disasRenameMap || {})
-      .map(([o,n]) => `${o} → ${n}`).join(', ');
-    const body = {
-      message: `patch disas.txt: rename ${changes} label(s) [${renames}]`,
-      content: b64,
-      ...(sha ? { sha } : {}),
-    };
-
-    const putRes = await fetch(apiBase, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify(body),
-    });
-
-    if (!putRes.ok) {
-      const err = await putRes.json().catch(() => ({}));
-      throw new Error(`${putRes.status}: ${err.message || putRes.statusText}`);
-    }
-
-    $('ghStatus').textContent = `✓ committed (${changes} renames)`;
-    $('ghStatus').style.color = 'var(--green)';
-    // Update cached disas so patch button reflects new state
-    window._rawDisasTxt = patched;
-    window._disasRenameMap = {};
-    setStatus(`> disas.txt committed to ${repo}_`);
-  } catch(e) {
-    $('ghStatus').textContent = `❌ ${e.message}`;
-    $('ghStatus').style.color = 'var(--red)';
-  } finally {
-    $('ghCommitBtn').disabled = false;
-  }
-};
-
-$('patchDisasBtn').onclick = patchDisas;
 $('asmInput').addEventListener('keydown', e => {
   if ((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); doCompile(); }
 });
