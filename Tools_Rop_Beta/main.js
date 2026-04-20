@@ -274,30 +274,46 @@ async function bootPyodide() {
   const setF = w => { fill.style.width = w; };
 
   try {
-    setL('⏳ fetching pyodide...');
+    setL('⏳ fetching pyodide (~20MB)...');
     setF('10%');
+
+    // Try jsdelivr first, fallback to unpkg
+    const CDN_URLS = [
+      'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js',
+      'https://unpkg.com/pyodide@0.26.2/full/pyodide.js',
+    ];
+    const INDEX_URLS = [
+      'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/',
+      'https://unpkg.com/pyodide@0.26.2/full/',
+    ];
+
+    let cdnIndex = 0;
     await new Promise((res, rej) => {
       if (window.loadPyodide) { res(); return; }
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
-      s.onload = res;
-      s.onerror = () => rej(new Error('Failed to load pyodide.js'));
-      document.head.appendChild(s);
+      const tryLoad = (i) => {
+        if (i >= CDN_URLS.length) { rej(new Error('All CDNs failed — check internet connection')); return; }
+        setL(`⏳ fetching pyodide (CDN ${i+1}/${CDN_URLS.length})...`);
+        const s = document.createElement('script');
+        s.src = CDN_URLS[i];
+        s.onload = () => { cdnIndex = i; res(); };
+        s.onerror = () => { setTimeout(() => tryLoad(i+1), 500); };
+        document.head.appendChild(s);
+      };
+      tryLoad(0);
     });
 
-    setF('30%'); setL('⏳ initialising python...');
+    setF('30%'); setL('⏳ starting python (may take 30s)...');
     bar.classList.remove('run');
     pyodide = await window.loadPyodide({
-      indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'
+      indexURL: INDEX_URLS[cdnIndex]
     });
 
-    setF('60%'); setL('⏳ setting up compiler...');
+    setF('55%'); setL('⏳ loading compiler...');
     const charTable = JSON.parse($('charTable').textContent);
     pyodide.globals.set('_CHAR_TABLE', pyodide.toPy(charTable));
 
     await pyodide.runPythonAsync(`
 import re, sys
-from functools import lru_cache
 
 max_call_adr = 0x3ffff
 npress = [1] * 256
@@ -499,7 +515,7 @@ def finish():
 def compile_program(src_text):
     reset_state()
     if not commands:
-        raise RuntimeError(f'commands dict is EMPTY — gadgets/labels not loaded yet. Reload page and wait for status bar to show gadget count.')
+        raise RuntimeError('commands dict EMPTY — data files not loaded. Check status bar shows gadget count > 0')
     for line in src_text.split('\\n'):
         line = canon(del_comment(line)).lower()
         try: process(line)
@@ -522,9 +538,7 @@ def compile_program(src_text):
 print("Compiler ready")
 `);
 
-    setF('85%'); setL('⏳ setting up decompiler...');
-    // Run DECOMP_PY NOW — before exposing pyodide instance
-    // loadDataFiles will inject _addr_to_name/_disas_label after this
+    setF('80%'); setL('⏳ loading decompiler...');
     await pyodide.runPythonAsync(DECOMP_PY);
     dpReady = true;
 
@@ -763,7 +777,7 @@ for _k, _v in _DISAS_MAP_JS.items():
 print(f"Decompiler: {len(_addr_to_name)} addr entries, {len(_disas_label)} disas entries")
 `);
 
-  setStatus(`> ${nCmd} gadgets | ${nDl} datalabels | ${nDis} disas_`);
+  setStatus(`> ${nCmd} gadgets | ${nDl} datalabels | ${nDis} disas | v2.1_`);
 }
 
 // ═══════════════════════════════════════════════
