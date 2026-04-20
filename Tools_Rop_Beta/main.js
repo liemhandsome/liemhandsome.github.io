@@ -65,7 +65,7 @@ def norm(a):
 def popsz(name):
     if not name: return None
     pops = []
-    for m in re.finditer(r'pop\\s+([^,]+(?:,[^,]+)*)', name):
+    for m in re.finditer(r'pop\s+([^,]+(?:,[^,]+)*)', name):
         for t in m.group(1).split(','):
             t = t.strip()
             if not t or t in ('rt','pop','sp'): continue
@@ -321,7 +321,7 @@ def to_lc(s): return s.lower()
 
 def canon(st):
     st = st.strip()
-    st = re.sub(r' *([^a-z0-9]) *', r'\\1', st)
+    st = re.sub(r' *([^a-z0-9]) *', r'\1', st)
     return st
 
 def del_comment(line):
@@ -498,6 +498,8 @@ def finish():
 
 def compile_program(src_text):
     reset_state()
+    if not commands:
+        raise RuntimeError(f'commands dict is EMPTY — gadgets/labels not loaded yet. Reload page and wait for status bar to show gadget count.')
     for line in src_text.split('\\n'):
         line = canon(del_comment(line)).lower()
         try: process(line)
@@ -551,13 +553,22 @@ bootPyodide();
 // ═══════════════════════════════════════════════
 // DATA FILE LOADER
 // Fetches ./gadgets, ./labels, ./disas.txt
-// Called automatically after pyodide boots
+// Cache-busted to avoid stale GitHub Pages cache
 // ═══════════════════════════════════════════════
+const _CACHE_BUST = '?v=' + Date.now();
+
 async function fetchText(path) {
-  try {
-    const r = await fetch(path, { headers: { 'Accept': 'text/plain, */*' } });
-    return r.ok ? await r.text() : null;
-  } catch { return null; }
+  // Try with cache-bust first, then without (for localhost)
+  for (const url of [path + _CACHE_BUST, path]) {
+    try {
+      const r = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'Accept': 'text/plain, */*' }
+      });
+      if (r.ok) return await r.text();
+    } catch {}
+  }
+  return null;
 }
 
 function parseGadgets(text) {
@@ -701,7 +712,11 @@ async function loadDataFiles() {
   }
 
   if (!gadgetsTxt && !labelsTxt) {
-    setStatus('> ⚠ gadgets/labels not found — place files next to index.html', true);
+    setStatus('> ⚠ gadgets/labels not found — check console for details', true);
+    $('pyLabel').textContent = '⚠ data files missing';
+    console.error('loadDataFiles: could not fetch gadgets or labels from', window.location.href);
+    // Schedule retry in 3s in case it was a transient network error
+    setTimeout(loadDataFiles, 3000);
     return;
   }
 
@@ -716,7 +731,7 @@ _d = _CMD_DATA
 
 def _norm_key(k):
     k = k.strip().lower()
-    k = re.sub(r'\\s+', ' ', k)
+    k = re.sub(r'\s+', ' ', k)
     k = re.sub(r'^bl ', 'bl', k)
     return k
 
