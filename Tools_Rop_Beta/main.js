@@ -380,8 +380,15 @@ def process(line):
         rest = line[4:].strip()
         try: adr = int(rest, 16)
         except ValueError:
-            entry = commands.get(rest)
-            if entry is None: raise AssertionError(f'Unknown command: {repr(rest)}')
+            # normalize key the same way as injection
+            key = _re.sub(r'\s+', ' ', rest.strip().lower())
+            key = _re.sub(r'^bl ', 'bl', key)
+            entry = commands.get(key)
+            if entry is None:
+                # show closest keys for debugging
+                close = [k for k in commands if k.startswith(key[:4])][:5]
+                raise AssertionError(f'Unknown command: {repr(key)}'
+                    + (f' — similar: {close}' if close else ''))
             adr, tags = entry
             for tag in tags:
                 if tag.startswith('warning'): note(tag+'\\n')
@@ -405,7 +412,11 @@ def process(line):
         lbl, off = line.split('+')
         process(f'0x{datalabels[lbl]+int(off,0):04x}'); return
     if line in commands:
-        process('call ' + to_lc(line)); return
+        process('call ' + line); return
+    # try normalized key in case of whitespace/case mismatch
+    _nline = _re.sub(r'^bl ', 'bl', _re.sub(r'\s+', ' ', line.strip()))
+    if _nline != line and _nline in commands:
+        process('call ' + _nline); return
     if line.startswith('pr_length'):
         pr_len_cmds.append(len(result)); result.extend((0,0)); return
     if line.startswith('str'):
@@ -703,8 +714,18 @@ async function loadDataFiles() {
   // Inject into compiler
   pyodide.globals.set('_CMD_DATA', pyodide.toPy({ commands, datalabels }));
   await pyodide.runPythonAsync(`
+import re as _re
 _d = _CMD_DATA
-commands   = {k: (v['addr'], tuple(v['tags'])) for k,v in _d['commands'].items()}
+
+def _norm_key(k):
+    # Strip whitespace, lowercase, collapse internal spaces, normalize BL prefix
+    k = k.strip().lower()
+    k = _re.sub(r'\\s+', ' ', k)
+    # collapse "bl xxx" -> "blxxx"  (matches parseGadgets JS logic)
+    k = _re.sub(r'^bl ', 'bl', k)
+    return k
+
+commands   = {_norm_key(k): (v['addr'], tuple(v['tags'])) for k,v in _d['commands'].items()}
 datalabels = dict(_d['datalabels'])
 print(f"Commands: {len(commands)}, Datalabels: {len(datalabels)}")
 `);
