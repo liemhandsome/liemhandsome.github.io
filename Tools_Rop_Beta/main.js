@@ -380,12 +380,10 @@ def process(line):
         rest = line[4:].strip()
         try: adr = int(rest, 16)
         except ValueError:
-            # normalize key the same way as injection
-            key = _re.sub(r'\s+', ' ', rest.strip().lower())
-            key = _re.sub(r'^bl ', 'bl', key)
+            key = re.sub(r'\s+', ' ', rest.strip().lower())
+            key = re.sub(r'^bl ', 'bl', key)
             entry = commands.get(key)
             if entry is None:
-                # show closest keys for debugging
                 close = [k for k in commands if k.startswith(key[:4])][:5]
                 raise AssertionError(f'Unknown command: {repr(key)}'
                     + (f' — similar: {close}' if close else ''))
@@ -414,7 +412,7 @@ def process(line):
     if line in commands:
         process('call ' + line); return
     # try normalized key in case of whitespace/case mismatch
-    _nline = _re.sub(r'^bl ', 'bl', _re.sub(r'\s+', ' ', line.strip()))
+    _nline = re.sub(r'^bl ', 'bl', re.sub(r'\s+', ' ', line.strip()))
     if _nline != line and _nline in commands:
         process('call ' + _nline); return
     if line.startswith('pr_length'):
@@ -714,15 +712,12 @@ async function loadDataFiles() {
   // Inject into compiler
   pyodide.globals.set('_CMD_DATA', pyodide.toPy({ commands, datalabels }));
   await pyodide.runPythonAsync(`
-import re as _re
 _d = _CMD_DATA
 
 def _norm_key(k):
-    # Strip whitespace, lowercase, collapse internal spaces, normalize BL prefix
     k = k.strip().lower()
-    k = _re.sub(r'\\s+', ' ', k)
-    # collapse "bl xxx" -> "blxxx"  (matches parseGadgets JS logic)
-    k = _re.sub(r'^bl ', 'bl', k)
+    k = re.sub(r'\\s+', ' ', k)
+    k = re.sub(r'^bl ', 'bl', k)
     return k
 
 commands   = {_norm_key(k): (v['addr'], tuple(v['tags'])) for k,v in _d['commands'].items()}
