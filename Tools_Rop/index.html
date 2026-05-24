@@ -3,42 +3,211 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>580VNX ROP Compiler · Handsome Boy</title>
+<title>580VNX Compiler · Handsome Boy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=VT323&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:     #0a0800;
+  --paper:  #110e00;
+  --panel:  #160f00;
+  --border: #3a2800;
+  --border2:#4d3500;
+  --amber:  #ffb000;
+  --amber2: #ff8c00;
+  --amber3: #ffdb80;
+  --dim:    #7a5800;
+  --dimmer: #3d2c00;
+  --red:    #ff4400;
+  --green:  #39ff14;
+  --blue:   #00aaff;
+  --text:   #ffe066;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body::before{content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);
+  pointer-events:none;z-index:9999;}
+body{background:var(--bg);font-family:'Share Tech Mono',monospace;min-height:100vh;
+  color:var(--amber);padding:16px;display:flex;flex-direction:column;align-items:center;
+  background-image:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,160,0,0.06) 0%,transparent 70%);}
+.wrap{width:100%;max-width:1100px;}
+
+/* HEADER */
+.header{border:1px solid var(--border2);border-bottom:none;padding:10px 20px;background:var(--panel);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:relative;}
+.header::before,.header::after{content:'';position:absolute;width:10px;height:10px;border-color:var(--amber);border-style:solid;}
+.header::before{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+.header::after{top:-1px;right:-1px;border-width:2px 2px 0 0;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:.12em;color:var(--amber);
+  text-shadow:0 0 16px var(--amber2),0 0 40px rgba(255,140,0,.3);animation:flicker 8s infinite;
+  background:repeating-linear-gradient(90deg,var(--amber) 0px,var(--amber) 6px,var(--amber2) 6px,var(--amber2) 12px);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+h1 span{background:repeating-linear-gradient(90deg,var(--amber3) 0px,var(--amber3) 6px,var(--amber2) 6px,var(--amber2) 12px);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+@keyframes flicker{0%,95%,100%{opacity:1;}96%{opacity:.85;}97%{opacity:1;}98%{opacity:.7;}99%{opacity:1;}}
+.credit{font-size:.7rem;color:var(--dim);border:1px solid var(--border);padding:3px 10px;letter-spacing:.08em;}
+.credit b{color:var(--amber2);}
+
+/* TABS */
+.tab-bar{display:flex;gap:0;border:1px solid var(--border2);border-bottom:none;background:var(--bg);}
+.tab-btn{flex:1;border:none;border-radius:0;padding:9px 0;font-size:.78rem;letter-spacing:.1em;
+  color:var(--dim);background:transparent;border-right:1px solid var(--border);
+  font-family:'Share Tech Mono',monospace;cursor:pointer;text-transform:uppercase;transition:all .12s;}
+.tab-btn:last-child{border-right:none;}
+.tab-btn.active{color:var(--bg);background:var(--amber);}
+.tab-btn:hover:not(.active){background:rgba(255,176,0,.08);color:var(--amber);}
+
+/* TOOLBAR */
+.toolbar{border:1px solid var(--border2);border-bottom:none;padding:8px 16px;background:var(--paper);
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+button{background:transparent;border:1px solid var(--border2);padding:5px 14px;
+  font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--dim);cursor:pointer;
+  letter-spacing:.06em;transition:all .12s;text-transform:uppercase;}
+button:hover{color:var(--amber);border-color:var(--amber);background:rgba(255,176,0,.07);
+  box-shadow:0 0 10px rgba(255,176,0,.15);}
+button:active{transform:scale(.97);}
+#compileBtn{color:var(--amber);border-color:var(--amber2);background:rgba(255,140,0,.08);
+  box-shadow:0 0 12px rgba(255,140,0,.2);font-size:.8rem;}
+#compileBtn:hover{background:rgba(255,140,0,.18);box-shadow:0 0 20px rgba(255,140,0,.35);}
+#compileBtn:disabled{opacity:.3;cursor:not-allowed;transform:none;}
+#clearBtn{color:var(--red);border-color:rgba(255,68,0,.4);}
+#clearBtn:hover{background:rgba(255,68,0,.1);border-color:var(--red);}
+#copyHexBtn{color:var(--green);border-color:rgba(57,255,20,.3);}
+#copyHexBtn:hover{background:rgba(57,255,20,.07);border-color:var(--green);}
+#pasteBtn{color:var(--amber3);border-color:rgba(255,219,128,.3);}
+.fmt-switch{margin-left:auto;display:flex;gap:0;border:1px solid var(--border2);}
+.fmt-btn{border:none;border-radius:0;padding:5px 16px;font-size:.72rem;color:var(--dim);background:transparent;}
+.fmt-btn.active{color:var(--bg);background:var(--amber);}
+.fmt-btn:hover:not(.active){background:rgba(255,176,0,.1);}
+
+/* EXAMPLES */
+.examples-row{border:1px solid var(--border2);border-bottom:none;padding:7px 16px;background:var(--paper);
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.examples-label{font-size:.65rem;color:var(--dimmer);margin-right:4px;letter-spacing:.1em;text-transform:uppercase;}
+.ex-btn{font-size:.68rem;padding:3px 10px;color:var(--dimmer);border-color:var(--border);}
+.ex-btn:hover{color:var(--amber3);border-color:var(--amber3);background:rgba(255,219,128,.06);}
+
+/* LOADING BAR */
+.load-bar{height:2px;background:var(--border);position:relative;overflow:hidden;}
+.load-bar .fill{height:100%;width:0%;background:var(--amber);box-shadow:0 0 8px var(--amber2);transition:width .4s;}
+.load-bar.running .fill{width:40%;animation:slide 1.2s infinite linear;}
+@keyframes slide{0%{margin-left:-40%;}100%{margin-left:100%;}}
+
+/* MAIN BORDER */
+.main-border{border:1px solid var(--border2);background:var(--paper);position:relative;}
+.main-border::before,.main-border::after{content:'';position:absolute;width:10px;height:10px;
+  border-color:var(--amber);border-style:solid;}
+.main-border::before{bottom:-1px;left:-1px;border-width:0 0 2px 2px;}
+.main-border::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+
+/* PANELS */
+.panels{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+@media(max-width:640px){.panels{grid-template-columns:1fr}}
+.panel{padding:14px 18px 18px;}
+.panel:first-child{border-right:1px solid var(--border);}
+.panel-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.16em;color:var(--dim);display:block;margin-bottom:8px;}
+textarea,#outputBox{width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:12.5px;padding:12px 14px;
+  outline:none;line-height:1.65;transition:border-color .2s;}
+textarea{resize:vertical;min-height:300px;}
+textarea:focus{border-color:var(--amber2);box-shadow:0 0 0 2px rgba(255,140,0,.12);}
+textarea::placeholder{color:var(--dimmer);}
+#outputBox{min-height:300px;max-height:520px;overflow-y:auto;white-space:pre-wrap;
+  word-break:break-all;color:var(--text);scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+#outputBox::-webkit-scrollbar{width:4px;}
+#outputBox::-webkit-scrollbar-thumb{background:var(--border2);}
+
+/* STATUS */
+.status-row{border-top:1px solid var(--border);padding:7px 18px;background:var(--panel);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+.status-pill{font-size:.72rem;color:var(--dim);font-family:'Share Tech Mono',monospace;transition:color .3s;}
+.stats-pill{font-size:.68rem;color:var(--dimmer);font-family:'Share Tech Mono',monospace;}
+
+/* DECOMPILER */
+#decompOutput{width:100%;background:var(--bg);border:1px solid var(--border);
+  min-height:300px;max-height:520px;overflow-y:auto;font-family:'Share Tech Mono',monospace;
+  font-size:12px;padding:10px 12px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+#decompOutput::-webkit-scrollbar{width:4px;}
+#decompOutput::-webkit-scrollbar-thumb{background:var(--border2);}
+.gadget-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;
+  padding:4px;border-bottom:1px solid var(--border);font-size:12px;}
+.gadget-line:hover{background:rgba(255,176,0,.04);}
+.hex-badge{background:rgba(255,176,0,.1);border:1px solid var(--border2);
+  padding:1px 8px;font-size:11px;color:var(--dim);letter-spacing:.04em;}
+.d-addr{color:var(--amber2);font-weight:bold;font-size:11px;}
+.d-name{color:var(--green);}
+.d-unk{color:var(--red);opacity:.8;}
+.d-data{color:var(--amber3);}
+.d-label{color:var(--amber);font-weight:bold;font-size:12px;letter-spacing:.04em;}
+.tok-hex{color:#ffb000;}
+.tok-addr{color:#ff8c00;}
+.tok-err{color:#ff4400;}
+.tok-note{color:#3d2c00;}
+.tok-label{color:#7a5800;font-size:.85em;}
+
+/* GADGET EDITOR */
+#gadgetEditorSection textarea{min-height:460px;font-size:12px;line-height:1.6;}
+.editor-toolbar{border:1px solid var(--border2);border-bottom:none;padding:8px 16px;background:var(--paper);
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.gadget-search-wrap{display:flex;gap:8px;align-items:center;flex:1;}
+.gadget-search{background:var(--bg);border:1px solid var(--border2);color:var(--amber);
+  font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:5px 10px;outline:none;flex:1;max-width:220px;}
+.gadget-search:focus{border-color:var(--amber2);}
+.gadget-search::placeholder{color:var(--dimmer);}
+#saveGadgetsBtn{color:var(--green);border-color:rgba(57,255,20,.3);}
+#saveGadgetsBtn:hover{background:rgba(57,255,20,.07);border-color:var(--green);}
+#resetGadgetsBtn{color:var(--red);border-color:rgba(255,68,0,.4);}
+#resetGadgetsBtn:hover{background:rgba(255,68,0,.1);border-color:var(--red);}
+#exportGadgetsBtn{color:var(--blue);border-color:rgba(0,170,255,.3);}
+#exportGadgetsBtn:hover{background:rgba(0,170,255,.07);border-color:var(--blue);}
+#importGadgetsBtn{color:var(--amber3);border-color:rgba(255,219,128,.3);}
+.gadget-list-preview{border:1px solid var(--border2);background:var(--bg);
+  max-height:200px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.gadget-list-preview::-webkit-scrollbar{width:4px;}
+.gadget-list-preview::-webkit-scrollbar-thumb{background:var(--border2);}
+.gadget-row{display:flex;align-items:center;gap:10px;padding:4px 12px;border-bottom:1px solid var(--border);
+  font-size:11.5px;cursor:pointer;transition:background .1s;}
+.gadget-row:hover{background:rgba(255,176,0,.06);}
+.gadget-row .g-addr{color:var(--amber2);min-width:52px;}
+.gadget-row .g-name{color:var(--green);}
+.gadget-row .g-comment{color:var(--dimmer);font-size:10px;margin-left:auto;}
+.gadget-row.is-comment{color:var(--dimmer);font-style:italic;}
+.gadget-row.is-comment .g-name{color:var(--dimmer);}
+.editor-panels{display:grid;grid-template-columns:1fr 1fr;gap:0;}
+@media(max-width:700px){.editor-panels{grid-template-columns:1fr}}
+.editor-panels .panel:first-child{border-right:1px solid var(--border);}
+.saved-badge{display:none;font-size:.65rem;color:var(--green);padding:3px 8px;border:1px solid rgba(57,255,20,.3);}
+.saved-badge.show{display:inline-block;}
+</style>
 </head>
 <body>
-
-<!-- PYODIDE LOADING OVERLAY -->
 <div class="wrap">
 
-  <!-- HEADER -->
   <div class="header">
-    <div class="title-block">
-      <h1>TOOLS <span>ROP</span> 580VNX</h1>
-    </div>
+    <h1>TOOLS <span>ROP</span> 580VNX</h1>
     <div class="credit">by <b>@liemdeptraiqua</b> · Handsome Boy</div>
   </div>
 
-  <!-- TABS -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tabCompile">[ COMPILER ]</button>
     <button class="tab-btn" id="tabDecomp">[ DECOMPILER ]</button>
+    <button class="tab-btn" id="tabGadgets">[ GADGET EDITOR ]</button>
   </div>
 
-  <!-- ══════════════ COMPILER SECTION ══════════════ -->
+  <!-- ═══ COMPILER ═══ -->
   <div id="sectionCompile">
     <div class="toolbar">
       <button id="compileBtn" disabled>[ COMPILE ]</button>
       <button id="pasteBtn">[ PASTE ]</button>
       <button id="clearBtn">[ CLEAR ]</button>
       <button id="copyHexBtn">[ COPY HEX ]</button>
-      <span id="pyLoadLabel" style="color:var(--dim);font-size:.7rem;margin-left:4px">⏳ loading python...</span>
+      <span id="pyLoadLabel" style="color:var(--dim);font-size:.7rem;margin-left:6px">⏳ loading...</span>
+      <div class="fmt-switch" style="margin-left:auto;">
+        <button class="fmt-btn active" id="fmtHex">HEX</button>
+        <button class="fmt-btn" id="fmtBytes">BYTES</button>
+      </div>
     </div>
-    <div class="compile-loading-bar indeterminate" id="pyLoadBar">
-      <div class="bar-fill" id="loaderBar"></div>
-    </div>
+    <div class="load-bar running" id="pyLoadBar"><div class="fill" id="loaderBar"></div></div>
     <div class="examples-row">
       <span class="examples-label">// examples</span>
       <button class="ex-btn" data-example="hello">hello_world</button>
@@ -51,7 +220,7 @@
       <div class="panels">
         <div class="panel">
           <span class="panel-label">// asm source</span>
-          <textarea id="asmInput" spellcheck="false" placeholder="org 0xe9e0&#10;setlr&#10;buffer_clear&#10;xr0 = 0x1111, adr_of text&#10;printline&#10;render.ddd4&#10;text:&#10;str &quot;Hello~World&quot;"></textarea>
+          <textarea id="asmInput" spellcheck="false" placeholder="org 0xe9e0&#10;&#10;setlr&#10;xr0 = 0x1111, adr_of text&#10;printline&#10;render.ddd4&#10;waitshift&#10;&#10;text:&#10;0x48 0x65 0x6c 0x6c 0x6f&#10;0x00"></textarea>
         </div>
         <div class="panel">
           <span class="panel-label">// output</span>
@@ -65,31 +234,23 @@
     </div>
   </div>
 
-  <!-- ══════════════ DECOMPILER SECTION ══════════════ -->
+  <!-- ═══ DECOMPILER ═══ -->
   <div id="sectionDecomp" style="display:none">
     <div class="toolbar">
       <button id="decompBtn">[ DECOMPILE ]</button>
       <button id="dPasteBtn">[ PASTE ]</button>
       <button id="dClearBtn">[ CLEAR ]</button>
-      <button id="dCopyBtn">[ COPY ]</button>
-      <div class="fmt-switch">
-        <button class="fmt-btn active" id="dModeDetail">DETAILED</button>
-        <button class="fmt-btn" id="dModeSimple">SIMPLE</button>
-      </div>
-      <span style="color:var(--dim);font-size:.7rem;margin-left:4px">dest:</span>
-      <input class="addr-inp" id="startAddrInput" value="d730" maxlength="6">
-      <span style="color:var(--dim);font-size:.7rem">src:</span>
-      <input class="addr-inp" id="backupAddrInput" value="e9e0" maxlength="6">
+      <input id="dAddrInp" class="addr-inp" style="background:var(--bg);border:1px solid var(--border2);color:var(--amber);font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:4px 8px;width:68px;text-align:center;outline:none;" value="E9E0" placeholder="ADDR">
     </div>
     <div class="main-border">
       <div class="panels">
         <div class="panel">
           <span class="panel-label">// hex input</span>
-          <textarea id="hexInput" spellcheck="false" placeholder="d0 08 33 30 e0 a0 30 30 ..."></textarea>
+          <textarea id="dHexInput" spellcheck="false" placeholder="e8 09 fa 08 ...&#10;&#10;paste hex bytes here"></textarea>
         </div>
         <div class="panel">
           <span class="panel-label">// decompiled output</span>
-          <div id="decompOutput"><span class="tok-note">// paste hex and press [ DECOMPILE ]</span></div>
+          <div id="decompOutput"><span class="tok-note">// paste hex, set start addr, then [ DECOMPILE ]</span></div>
         </div>
       </div>
       <div class="status-row">
@@ -99,19 +260,767 @@
     </div>
   </div>
 
-</div>
+  <!-- ═══ GADGET EDITOR ═══ -->
+  <div id="gadgetEditorSection" style="display:none">
+    <div class="editor-toolbar">
+      <button id="saveGadgetsBtn">[ APPLY ]</button>
+      <button id="exportGadgetsBtn">[ EXPORT ]</button>
+      <button id="importGadgetsBtn">[ IMPORT FILE ]</button>
+      <input type="file" id="importFileInput" accept=".txt,text/plain" style="display:none">
+      <button id="resetGadgetsBtn">[ RESET DEFAULT ]</button>
+      <span id="savedBadge" class="saved-badge">✓ applied</span>
+    </div>
+    <div class="editor-toolbar" style="padding:7px 16px;">
+      <div class="gadget-search-wrap">
+        <span style="font-size:.65rem;color:var(--dimmer);letter-spacing:.1em;">SEARCH:</span>
+        <input class="gadget-search" id="gadgetSearch" placeholder="filter gadgets..." spellcheck="false">
+      </div>
+      <span id="gadgetCount" style="font-size:.65rem;color:var(--dimmer);margin-left:auto;"></span>
+    </div>
+    <div class="main-border">
+      <div class="editor-panels">
+        <div class="panel" style="padding:14px 18px 18px;">
+          <span class="panel-label">// gadgets file (hex TAB name)</span>
+          <textarea id="gadgetsTextarea" spellcheck="false"></textarea>
+        </div>
+        <div class="panel" style="padding:14px 18px 18px;">
+          <span class="panel-label">// labels file (hex TAB TAB name)</span>
+          <textarea id="labelsTextarea" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding:8px 16px;background:var(--panel);">
+        <div class="panel-label" style="margin-bottom:6px;">// parsed gadgets preview (click to insert into asm)</div>
+        <div id="gadgetListPreview" class="gadget-list-preview"></div>
+      </div>
+      <div class="status-row">
+        <div class="status-pill" id="gadgetStatusMsg">&gt; edit gadgets/labels then click [ APPLY ]_</div>
+        <div class="stats-pill" id="gadgetStatsMsg"></div>
+      </div>
+    </div>
+  </div>
 
+</div><!-- .wrap -->
+
+<!-- ═══ CHAR TABLE ═══ -->
 <script id="charTable" type="application/json">
-{"48": "30", "49": "31", "50": "32", "51": "33", "52": "34", "53": "35", "54": "36", "55": "37", "56": "38", "57": "39", "65": "41", "66": "42", "67": "43", "68": "44", "69": "45", "70": "46", "71": "47", "72": "48", "73": "49", "74": "4A", "75": "4B", "76": "4C", "77": "4D", "78": "4E", "79": "4F", "80": "50", "81": "51", "82": "52", "83": "53", "84": "54", "85": "55", "86": "56", "87": "57", "88": "58", "89": "59", "90": "5A", "97": "61", "98": "62", "99": "63", "100": "64", "101": "65", "102": "66", "103": "67", "104": "68", "105": "69", "106": "6A", "107": "6B", "108": "6C", "109": "6D", "110": "6E", "111": "6F", "112": "70", "113": "71", "114": "72", "115": "73", "116": "74", "117": "75", "118": "76", "119": "77", "120": "78", "121": "79", "122": "7A", "193": "F451", "225": "F471", "192": "F450", "224": "F470", "7842": "F454", "7843": "F474", "195": "F453", "227": "F473", "7840": "F410", "7841": "F465", "258": "F455", "259": "F475", "7854": "F411", "7855": "F431", "7856": "F412", "7857": "F432", "7858": "F490", "7859": "F456", "7860": "F491", "7861": "F457", "7862": "F413", "7863": "F433", "194": "F452", "226": "F472", "7844": "F414", "7845": "F434", "7846": "F415", "7847": "F435", "7848": "F416", "7849": "F436", "7850": "F492", "7851": "F477", "7852": "F417", "7853": "F437", "201": "F459", "233": "F479", "200": "F458", "232": "F478", "7866": "F45B", "7867": "F47B", "7868": "F418", "7869": "F438", "7864": "F419", "7865": "F439", "202": "F45A", "234": "F47A", "7870": "F41A", "7871": "F43A", "7872": "F41B", "7873": "F43B", "7874": "F41C", "7875": "F43C", "7876": "F41D", "7877": "F43D", "7878": "F41E", "7879": "F43E", "205": "F45D", "237": "F47D", "204": "F45C", "236": "F47C", "7880": "F42B", "7881": "F47F", "296": "F45E", "297": "F47E", "7882": "F428", "7883": "F448", "211": "F463", "243": "F483", "210": "F462", "242": "F482", "7886": "F429", "7887": "F486", "213": "F430", "245": "F485", "7884": "F42A", "7885": "F487", "212": "F464", "244": "F484", "7888": "F41F", "7889": "F43F", "7890": "F420", "7891": "F440", "7892": "F421", "7893": "F441", "7894": "F422", "7895": "F442", "7896": "F423", "7897": "F445", "416": "F444", "417": "F44D", "7898": "F425", "7899": "F44E", "7900": "F426", "7901": "F446", "7902": "F427", "7903": "F447", "7904": "F443", "7905": "F46E", "7906": "F424", "7907": "F48E", "218": "F46A", "250": "F48A", "217": "F469", "249": "F489", "7910": "F42C", "7911": "F48C", "360": "F42D", "361": "F48B", "7908": "F42E", "7909": "F488", "431": "F44F", "432": "F46F", "7912": "F44A", "7913": "F461", "7914": "F44B", "7915": "F467", "7916": "F44C", "7917": "F468", "7918": "F48F", "7919": "F476", "7920": "F449", "7921": "F481", "221": "F46D", "253": "F48D", "7922": "F42F", "7923": "F45F", "7926": "F493", "7927": "F466", "7928": "F494", "7929": "F46B", "7924": "F495", "7925": "F46C", "272": "F460", "273": "F480", "126": "20", "64": "40", "95": "5F", "38": "1A", "45": "2D", "43": "2B", "40": "28", "41": "29", "47": "2F", "42": "2A", "39": "27", "58": "3A", "33": "21", "63": "3F", "124": "7C", "8730": "98", "247": "26", "215": "24", "94": "5E", "176": "85", "123": "7B", "125": "7D", "91": "5B", "93": "5D", "37": "25", "46": "2E", "44": "2C"}
+{"48":"30","49":"31","50":"32","51":"33","52":"34","53":"35","54":"36","55":"37","56":"38","57":"39","65":"41","66":"42","67":"43","68":"44","69":"45","70":"46","71":"47","72":"48","73":"49","74":"4A","75":"4B","76":"4C","77":"4D","78":"4E","79":"4F","80":"50","81":"51","82":"52","83":"53","84":"54","85":"55","86":"56","87":"57","88":"58","89":"59","90":"5A","97":"61","98":"62","99":"63","100":"64","101":"65","102":"66","103":"67","104":"68","105":"69","106":"6A","107":"6B","108":"6C","109":"6D","110":"6E","111":"6F","112":"70","113":"71","114":"72","115":"73","116":"74","117":"75","118":"76","119":"77","120":"78","121":"79","122":"7A","193":"F451","225":"F471","192":"F450","224":"F470","7842":"F454","7843":"F474","195":"F453","227":"F473","7840":"F410","7841":"F465","258":"F455","259":"F475","7854":"F411","7855":"F431","7856":"F412","7857":"F432","7858":"F490","7859":"F456","7860":"F491","7861":"F457","7862":"F413","7863":"F433","194":"F452","226":"F472","7844":"F414","7845":"F434","7846":"F415","7847":"F435","7848":"F416","7849":"F436","7850":"F492","7851":"F477","7852":"F417","7853":"F437","201":"F459","233":"F479","200":"F458","232":"F478","7866":"F45B","7867":"F47B","7868":"F418","7869":"F438","7864":"F419","7865":"F439","202":"F45A","234":"F47A","7870":"F41A","7871":"F43A","7872":"F41B","7873":"F43B","7874":"F41C","7875":"F43C","7876":"F41D","7877":"F43D","7878":"F41E","7879":"F43E","205":"F45D","237":"F47D","204":"F45C","236":"F47C","7880":"F42B","7881":"F47F","296":"F45E","297":"F47E","7882":"F428","7883":"F448","211":"F463","243":"F483","210":"F462","242":"F482","7886":"F429","7887":"F486","213":"F430","245":"F485","7884":"F42A","7885":"F487","212":"F464","244":"F484","7888":"F41F","7889":"F43F","7890":"F420","7891":"F440","7892":"F421","7893":"F441","7894":"F422","7895":"F442","7896":"F423","7897":"F445","416":"F444","417":"F44D","7898":"F425","7899":"F44E","7900":"F426","7901":"F446","7902":"F427","7903":"F447","7904":"F443","7905":"F46E","7906":"F424","7907":"F48E","218":"F46A","250":"F48A","217":"F469","249":"F489","7910":"F42C","7911":"F48C","360":"F42D","361":"F48B","7908":"F42E","7909":"F488","431":"F44F","432":"F46F","7912":"F44A","7913":"F461","7914":"F44B","7915":"F467","7916":"F44C","7917":"F468","7918":"F48F","7919":"F476","7920":"F449","7921":"F481","221":"F46D","253":"F48D","7922":"F42F","7923":"F45F","7926":"F493","7927":"F466","7928":"F494","7929":"F46B","7924":"F495","7925":"F46C","272":"F460","273":"F480","126":"20","64":"40","95":"5F","38":"1A","45":"2D","43":"2B","40":"28","41":"29","47":"2F","42":"2A","39":"27","58":"3A","33":"21","63":"3F","124":"7C","8730":"98","247":"26","215":"24","94":"5E","176":"85","123":"7B","125":"7D","91":"5B","93":"5D","37":"25","46":"2E","44":"2C"}
 </script>
 
-<!-- ══════════════════════════════════════════════
-     EMBEDDED COMPILER DATA (pre-computed from ROM)
-     ══════════════════════════════════════════════ -->
-<script id="compilerData" type="application/json">
-{"commands":{"setlr":{"addr":40872,"tags":[]},"di,rt":{"addr":41052,"tags":[]},"calc_checksum_set_f004":{"addr":147358,"tags":[]},"calc_checksum_no_set_f004":{"addr":147366,"tags":[]},"calc_checksum_0":{"addr":147373,"tags":[]},"calc_checksum_1":{"addr":147392,"tags":[]},"calc_checksum_2":{"addr":147412,"tags":[]},"calc_checksum_3":{"addr":147434,"tags":[]},"pr_checksum":{"addr":147233,"tags":[]},"[er8]+=er2,pop xr8":{"addr":40096,"tags":[]},"sp=er14,pop er14,rt":{"addr":159790,"tags":[]},"sp=er14,pop qr8":{"addr":77222,"tags":[]},"sp=er14,pop qr8,pop qr0":{"addr":147330,"tags":[]},"sp=er14,pop er14":{"addr":134496,"tags":[]},"sp=er6,pop er8":{"addr":139124,"tags":[]},"sp=er14,pop xr12":{"addr":38944,"tags":[]},"sp=er14,pop qr8,pop er6":{"addr":80556,"tags":[]},"er14=sp,rt":{"addr":44084,"tags":[]},"nop":{"addr":43176,"tags":[]},"calc_func":{"addr":96546,"tags":[]},"pop ea":{"addr":125964,"tags":[]},"pop er14,rt":{"addr":159792,"tags":[]},"pop er0,rt":{"addr":78642,"tags":[]},"pop er2":{"addr":100724,"tags":[]},"pop er4":{"addr":151718,"tags":[]},"pop er8":{"addr":43174,"tags":[]},"pop er12,rt":{"addr":93898,"tags":[]},"pop qr0":{"addr":97242,"tags":[]},"pop qr8":{"addr":77224,"tags":[]},"pop r0":{"addr":96218,"tags":[]},"pop r8":{"addr":99402,"tags":[]},"pop xr0":{"addr":97076,"tags":[]},"pop xr4":{"addr":118848,"tags":[]},"pop xr8":{"addr":99238,"tags":[]},"pop er10":{"addr":54550,"tags":[]},"pop r12":{"addr":53324,"tags":[]},"pop er0":{"addr":75266,"tags":[]},"pop er12":{"addr":136758,"tags":[]},"pop er14":{"addr":89208,"tags":[]},"pop er6":{"addr":80560,"tags":[]},"pop er6,rt":{"addr":122102,"tags":[]},"pop xr12":{"addr":132912,"tags":[]},"pop er4,rt":{"addr":93576,"tags":[]},"pop er8,rt":{"addr":93564,"tags":[]},"pop qr0,rt":{"addr":94322,"tags":[]},"pop qr8,rt":{"addr":85072,"tags":[]},"pop r4":{"addr":90048,"tags":[]},"pop r4,rt":{"addr":90640,"tags":[]},"pop r9":{"addr":85144,"tags":[]},"pop xr12,rt":{"addr":69210,"tags":[]},"pop xr4,rt":{"addr":121202,"tags":[]},"pop xr8,rt":{"addr":58850,"tags":[]},"er0+=er4,rt":{"addr":84952,"tags":[]},"er4+=er0,r8=r8,rt":{"addr":80768,"tags":[]},"er0+=er8,rt":{"addr":138152,"tags":[]},"er2+=er8,rt":{"addr":138158,"tags":[]},"er0+=er2,rt":{"addr":195084,"tags":[]},"er0+=1,rt":{"addr":90232,"tags":[]},"r0+=1,rt":{"addr":40164,"tags":[]},"er6=er0,er0=er8,pop qr8":{"addr":147464,"tags":[]},"er8=er0":{"addr":90480,"tags":[]},"er2=er0,er0=er2,pop er8,rt":{"addr":60016,"tags":[]},"er2=er0,er0+=er4,rt":{"addr":84950,"tags":[]},"er0=er2,rt":{"addr":48944,"tags":[]},"er0=er4,pop er4":{"addr":149258,"tags":[]},"er0=er8,pop er8,rt":{"addr":194438,"tags":[]},"er0=er8":{"addr":86918,"tags":[]},"er0=er6,pop er8,pop xr4":{"addr":126442,"tags":[]},"er2=er0,r0=r4,r1=0,pop xr4,rt":{"addr":167046,"tags":[]},"r0=r5,pop er4":{"addr":196544,"tags":[]},"r0=r2=0":{"addr":109488,"tags":[]},"r0=r2":{"addr":109490,"tags":[]},"r2=r0,pop er0":{"addr":90078,"tags":[]},"r2=r0,pop r6,pop er12":{"addr":91364,"tags":[]},"r2=0,r7=4":{"addr":96180,"tags":[]},"r0=0":{"addr":117386,"tags":[]},"r0=0,rt":{"addr":122196,"tags":[]},"r0=1,rt":{"addr":122200,"tags":[]},"r0=0,pop er2":{"addr":100728,"tags":[]},"r1=0,rt":{"addr":175152,"tags":[]},"r5=0,rt":{"addr":93682,"tags":[]},"er14=er0,pop xr0":{"addr":97074,"tags":[]},"er0=er12,pop er12,rt":{"addr":44156,"tags":[]},"er10=er2,rt":{"addr":80150,"tags":[]},"er0=er10,pop xr8":{"addr":133970,"tags":[]},"er0=1,rt":{"addr":124428,"tags":[]},"er2=0,er4=0,er6=0,er8=1,rt":{"addr":98514,"tags":[]},"er2=0,r0=2,[er8]=er2,pop xr8":{"addr":40106,"tags":[]},"er2=1,r0=r2,rt":{"addr":43146,"tags":[]},"r0=0,[er8]+=er2,pop xr8":{"addr":40094,"tags":[]},"r2=1,r0=r2,pop er4,pop er8,rt":{"addr":163452,"tags":[]},"r0=r1,rt":{"addr":163474,"tags":[]},"[er2]=er0,r2=0,pop er4,rt":{"addr":93594,"tags":[]},"[er0]=er2,rt":{"addr":80344,"tags":[]},"[er0]=r2,rt":{"addr":133298,"tags":[]},"[er0]=r2":{"addr":132050,"tags":[]},"[er2]=r0,r2=0":{"addr":95956,"tags":[]},"[er8]=er2,pop xr8":{"addr":40100,"tags":[]},"[er4]=er0,pop er0,rt":{"addr":78640,"tags":[]},"[ea]=qr0":{"addr":107912,"tags":[]},"[er12]=er14,pop xr4,pop qr8":{"addr":139814,"tags":[]},"er4=[er8],pop er8,rt":{"addr":93562,"tags":[]},"er0=[er2],r2=9,rt":{"addr":80798,"tags":[]},"er8=[er0],rt":{"addr":80746,"tags":[]},"r0=[er2]":{"addr":40522,"tags":[]},"r0=[er0]":{"addr":98932,"tags":[]},"er0=[er0],pop xr8,rt":{"addr":170204,"tags":[]},"r0=[ea],rt":{"addr":40924,"tags":[]},"sp=[er8],pop er8":{"addr":139122,"tags":[]},"qr0=[ea],lead002h,[ea]=qr0":{"addr":115392,"tags":[]},"er0-=er2,rt":{"addr":40586,"tags":[]},"er0-=er12,pop er8,pop er12,rt":{"addr":170560,"tags":[]},"r0-=1,rt":{"addr":40600,"tags":[]},"r0-=r8,pop er8,rt":{"addr":44122,"tags":[]},"or r0,r1":{"addr":74452,"tags":[]},"or qr0,qr8":{"addr":107970,"tags":[]},"r0>>4,rt":{"addr":133168,"tags":[]},"qr0>>4,rt":{"addr":113448,"tags":[]},"r0<<4,rt":{"addr":113500,"tags":[]},"r1<<4,rt":{"addr":113520,"tags":[]},"er0<<4,rt":{"addr":113498,"tags":[]},"xr0<<4,rt":{"addr":113494,"tags":[]},"qr0<<4,rt":{"addr":113486,"tags":[]},"er0-er2_gt,r0=0|r0=1,rt":{"addr":51088,"tags":[]},"er0-er2_eq,r0=1,rt":{"addr":39654,"tags":[]},"er2-er0_gt,r0=0|r0=1,rt":{"addr":51112,"tags":[]},"er0-er2_le,er0=er2,rt":{"addr":175066,"tags":[]},"er8-er0_lt,pop xr8":{"addr":169954,"tags":[]},"r0-0_lt,rt":{"addr":37356,"tags":[]},"r1-0_lt,rt":{"addr":37364,"tags":[]},"er0*=r2,er2=er0,er0+=er4,rt":{"addr":84948,"tags":[]},"er0*=r2,er0+=er6,er10=er0,rt":{"addr":85962,"tags":[]},"er0/=r2,rt":{"addr":166996,"tags":[]},"break":{"addr":208944,"tags":[]},"[ea]+=1,r0=3":{"addr":55068,"tags":[]},"[ea]-=1,pop xr4":{"addr":182302,"tags":[]},"bleave":{"addr":149558,"tags":[]},"blmemcpy,pop er0":{"addr":37968,"tags":[]},"blstrcpy":{"addr":132044,"tags":[]},"blstrcat":{"addr":132064,"tags":[]},"blmemset,pop er2":{"addr":40250,"tags":[]},"bldelay,pop xr0":{"addr":146604,"tags":[]},"blline_print":{"addr":134208,"tags":[]},"blprintline":{"addr":147298,"tags":[]},"blhex_byte,er6=er0,er0=er8,pop qr8":{"addr":147460,"tags":[]},"blsmart_strcpy,pop er8":{"addr":133712,"tags":[]},"blzero_ko":{"addr":41042,"tags":[]},"blline_draw":{"addr":166594,"tags":[]},"blrender.ddd4":{"addr":39636,"tags":[]},"strcpy":{"addr":58824,"tags":["rt"]},"strcat":{"addr":191904,"tags":["rt"]},"memcpy":{"addr":159738,"tags":["rt"]},"memmove":{"addr":43178,"tags":["rt"]},"strlen":{"addr":170540,"tags":["rt"]},"memset":{"addr":125844,"tags":["rt"]},"smart_strcpy":{"addr":132036,"tags":["del lr"]},"smart_strcat":{"addr":132056,"tags":["del lr"]},"smart_strlen_n":{"addr":132024,"tags":["rt"]},"basen_base_print":{"addr":133230,"tags":["del lr"]},"smallprint":{"addr":146892,"tags":["rt","del lr"]},"line_print.col_0":{"addr":36732,"tags":["rt","del lr"]},"line_print":{"addr":36736,"tags":["del lr"]},"printline":{"addr":146888,"tags":["del lr"]},"render.e3d4":{"addr":38002,"tags":["del lr"]},"render.ddd4":{"addr":38014,"tags":["del lr"]},"render_bitmap":{"addr":38984,"tags":["del lr"]},"memzero":{"addr":40246,"tags":["del lr"]},"reset_routine":{"addr":155784,"tags":["del lr"]},"get_string_constant":{"addr":150486,"tags":["rt"]},"fill_screen":{"addr":35854,"tags":["del lr"]},"str_decompress_print":{"addr":36610,"tags":["rt","del lr"]},"delay":{"addr":40764,"tags":["del lr"]},"_start":{"addr":41422,"tags":["rt","del lr"]},"main":{"addr":168920,"tags":["rt","del lr"]},"buf1_to_buf2":{"addr":37954,"tags":["del lr"]},"buf2_to_buf1":{"addr":37978,"tags":["del lr"]},"byte_strlen_n":{"addr":174886,"tags":["rt"]},"diagnostic_mode":{"addr":146510,"tags":["del lr"]},"f_0ACB6":{"addr":44216,"tags":["del lr"]},"diagnostic_wait_key":{"addr":44436,"tags":["del lr"]},"check_any_key_pressed__":{"addr":59432,"tags":["del lr"]},"diagnostic":{"addr":146614,"tags":["del lr"]},"diag_scr_888_ws":{"addr":148294,"tags":["del lr"]},"diag_scr_fill_ws":{"addr":146904,"tags":["del lr"]},"waitshift_striped":{"addr":146906,"tags":["rt","del lr"]},"waitshift":{"addr":146910,"tags":["rt","del lr"]},"diag_scr_ckb1_ws":{"addr":146916,"tags":["rt","del lr"]},"diag_scr_ckb2_ws":{"addr":147008,"tags":["rt","del lr"]},"diag_scr_version":{"addr":147052,"tags":["del lr"]},"diag_print_ver":{"addr":147092,"tags":["del lr"]},"diag_checksum":{"addr":147184,"tags":["del lr"]},"store_reg_to_stack":{"addr":147338,"tags":["rt"]},"diag_print_pd":{"addr":147146,"tags":["del lr"]},"diag_calc_checksum":{"addr":147356,"tags":["del lr"]},"pd_value":{"addr":39460,"tags":["rt"]},"hex_byte":{"addr":147472,"tags":["rt"]},"hex_to_dec":{"addr":39224,"tags":["rt"]},"diag_serial_num":{"addr":152604,"tags":["del lr"]},"get_serial_num":{"addr":69216,"tags":["del lr"]},"diag_check_key":{"addr":146780,"tags":["del lr"]},"diag_contrast":{"addr":156700,"tags":["del lr"]},"diag_8_keytest":{"addr":181644,"tags":["del lr"]},"getscancode":{"addr":127566,"tags":["del lr"]},"getscancode_nodelay":{"addr":194026,"tags":["del lr"]},"getkeycode":{"addr":154652,"tags":["del lr"]},"cvt_keycode":{"addr":170130,"tags":["rt"]},"setsfr":{"addr":41184,"tags":["rt"]},"byte_to_bcd":{"addr":104456,"tags":["rt"]},"bcd_to_byte":{"addr":104498,"tags":["rt"]},"line_draw":{"addr":36452,"tags":["del lr"]},"pixel_draw":{"addr":37372,"tags":["rt"]},"line_print__call__":{"addr":191946,"tags":["del lr"]},"str_decompress_print__call__":{"addr":39278,"tags":["del lr"]},"str_decompress_print__call1__":{"addr":39362,"tags":["rt","del lr"]},"char_print_1byte":{"addr":36942,"tags":["del lr"]},"char_print":{"addr":36952,"tags":["del lr"]},"char_get_14":{"addr":37432,"tags":["rt"]},"char_get_l14":{"addr":37656,"tags":["rt"]},"zero_KO":{"addr":41322,"tags":["rt"]},"assign_var":{"addr":40424,"tags":["del lr"]},"buffer_clear":{"addr":35936,"tags":["rt"]},"ENTER":{"addr":44080,"tags":["rt"]},"LEAVE":{"addr":44088,"tags":["rt","del lr"]},"LEAVE1":{"addr":140510,"tags":["rt","del lr"]},"LEAVE2":{"addr":142694,"tags":["rt","del lr"]},"LEAVE3":{"addr":81298,"tags":["rt","del lr"]},"LEAVE4":{"addr":135434,"tags":["rt","del lr"]},"load_table":{"addr":80794,"tags":["rt"]},"num_add":{"addr":91436,"tags":["rt","del lr"]},"num_sub":{"addr":91448,"tags":["rt","del lr"]},"num_mul":{"addr":91460,"tags":["rt","del lr"]},"num_div":{"addr":91472,"tags":["rt","del lr"]},"num_add_1":{"addr":119372,"tags":["del lr"]},"num_sub_1":{"addr":119352,"tags":["del lr"]},"num_mul_1":{"addr":119412,"tags":["del lr"]},"num_div_1":{"addr":119392,"tags":["del lr"]},"num_output_print":{"addr":134216,"tags":["del lr"]},"num_fromdigit":{"addr":121168,"tags":["rt"]},"num_frombyte":{"addr":121904,"tags":["del lr"]},"num_invalid__":{"addr":120986,"tags":["del lr"]},"num_trunc__":{"addr":121828,"tags":["del lr"]},"num_mulxp__":{"addr":121586,"tags":["del lr"]},"num_random":{"addr":80154,"tags":["rt","del lr"]},"num_randint":{"addr":80416,"tags":["rt","del lr"]},"num_normalize":{"addr":80338,"tags":["rt","del lr"]},"num_to_byte":{"addr":121996,"tags":["del lr"]},"num_to_str":{"addr":162232,"tags":["del lr"]},"num_cpy":{"addr":122084,"tags":["rt"]},"num_cmp":{"addr":121092,"tags":["del lr"]},"num_sin":{"addr":92230,"tags":["del lr"]},"num_cos":{"addr":92240,"tags":["del lr"]},"num_tan":{"addr":92388,"tags":["rt","del lr"]},"display_menu":{"addr":175438,"tags":["del lr"]},"draw_byte":{"addr":37842,"tags":["rt"]}},"datalabels":{"reg0":53248,"reg0.9":53257,"modifiers":53520,"mode":53521,"submode":53522,"num_format":53530,"num_format_i":53531,"angle_unit":53533,"draw_mode":53560,"input_range":53632,"unstable_char":54040,"var_m":54042,"var_ans":54052,"var_a":54062,"var_b":54072,"var_c":54082,"var_d":54092,"var_e":54102,"var_f":54112,"var_x":54122,"var_y":54132,"var_preans":54142,"var_z":54152,"calc_history":54162,"current_screen_buffer":53561,"screen_buffer":56788,"font_size":53559,"cursor_noflash":53523,"magic_string":56272,"hardware.dsr":61440,"timer.interval":61472,"timer.counter":61474,"timer.control":61477,"screen.range":61488,"screen.mode":61489,"screen.contrast":61490,"screen.contrast2":61491,"keyboard.ki":61504,"keyboard.ki_filter":61506,"keyboard.ko_mask":61508,"keyboard.ko":61510,"screen.disp":63488,"screen.disp.1":63489,"screen.disp.2":63490,"screen.disp.A":63498,"screen.disp.B":63499}}
-</script>
+<script>
+'use strict';
 
-<script src="main.js"></script>
+// ═══════════════════════════════════════════════
+// DEFAULT DATA (embedded from 580vnx/gadgets & labels)
+// ═══════════════════════════════════════════════
+const DEFAULT_GADGETS = "09fa8\tsetlr\n0a05c\tDI,RT\n23f9e\tcalc_checksum_set_f004\n23fa6\tcalc_checksum_no_set_f004\n23fad\tcalc_checksum_0\n23fc0\tcalc_checksum_1\n23fd4\tcalc_checksum_2\n23fea\tcalc_checksum_3\n23f21\tpr_checksum\n09ca0\t[er8]+=er2,pop xr8\n2702e\tsp = er14,pop er14,rt\n12da6\tsp = er14,pop qr8\n23f82\tsp = er14,pop qr8,pop qr0\n20d60\tsp = er14,pop er14\n21f74\tsp = er6,pop er8\n09820\tsp = er14,pop xr12\n13aac\tsp = er14,pop qr8,pop er6\n0ac34\ter14 = sp,rt\n0a8a8\tnop\n09848\trender_bitmap\n1c64a\ter6=[ea+]\n308d0\tsetlr_pc\n\n# Some POP gadgets:\n1ec0c\tpop ea\n27030\tpop er14,rt\n13332\tpop er0,rt\n18974\tpop er2\n250a6\tpop er4\n0a8a6\tpop er8\n16eca\tpop er12,rt\n17bda\tpop qr0\n12da8\tpop qr8\n177da\tpop r0\n1844a\tpop r8\n17b34\tpop xr0\n1d040\tpop xr4\n183a6\tpop xr8\n0d516\tpop er10\n0d04c\tpop r12\n12602\tpop er0\n21636\tpop er12\n15c78\tpop er14\n13ab0\tpop er6\n1dcf6\tpop er6,rt\n20730\tpop xr12\n16d88\tpop er4,rt\n16d7c\tpop er8,rt\n17072\tpop qr0,rt\n14c50\tpop qr8,rt\n15fc0\tpop r4\n16210\tpop r4,rt\n14c98\tpop r9\n10e5a\tpop xr12,rt\n1d972\tpop xr4,rt\n0e5e2\tpop xr8,rt\n\n# Some ADD gadgets:\n14bd8\ter0+=er4,rt\n13b80\ter4+=er0,r8 = r8,rt\n21ba8\ter0+=er8,rt\n21bae\ter2+=er8,rt\n2fa0c\ter0+=er2,rt\n16078\ter0+=1,rt\n09ce4\tr0+=1,rt\n1332a\t[er4]+=1,rt\n13336\t[er4]-=1,rt\n\n# Some MOV gadgets:\n24008\ter6 = er0,er0 = er8,pop qr8\n16170\ter8 = er0\n0ea70\ter2 = er0,er0 = er2,pop er8,rt\n14bd6\ter2 = er0,er0+=er4,rt\n0bf30\ter0 = er2,rt\n2470a\ter0 = er4,pop er4\n2f786\ter0 = er8,pop er8,rt\n15386\ter0 = er8\n1edea\ter0 = er6,pop er8,pop xr4\n28c86\ter2 = er0,r0 = r4,r1 = 0,pop xr4,rt\n2ffc0\tr0 = r5,pop er4\n1abb0\tr0 = r2 = 0\n1abb2\tr0 = r2\n15fde\tr2 = r0,pop er0\n164e4\tr2 = r0,pop r6,pop er12\n177b4\tr2 = 0,r7 = 4\n1ca8a\tr0 = 0\n1DD54\tr0 = 0,rt\n1DD58\tr0 = 1,rt\n18978\tr0 = 0,pop er2\n2ac30\tr1 = 0,rt\n16df2\tr5 = 0,rt\n17b32\ter14 = er0,pop xr0\n0ac7c\ter0 = er12,pop er12,rt\n13916\ter10 = er2,rt\n20b52\ter0 = er10,pop xr8\n1e60c\ter0 = 1,rt\n180d2\ter2 = 0,er4 = 0,er6 = 0,er8 = 1,rt\n09caa\ter2 = 0,r0 = 2,[er8]=er2,pop xr8\n0a88a\ter2 = 1,r0 = r2,rt\n09c9e\tr0 = 0,[er8]+=er2,pop xr8\n27e7c\tr2 = 1,r0 = r2,pop er4,pop er8,rt\n27e92\tr0 = r1,rt\n\n# Some ST gadgets:\n16d9a\t[er2]=er0,r2 = 0,pop er4,rt\n139d8\t[er0]=er2,rt\n208b2\t[er0]=r2,rt\n203D2\t[er0]=r2\n176d4\t[er2]=r0,r2 = 0\n09ca4\t[er8]=er2,pop xr8\n13330\t[er4]=er0,pop er0,rt\n1a588\t[ea]=qr0\n22226\t[er12]=er14,pop xr4,pop qr8\n\n# Some L gadgets:\n16d7a\ter4=[er8],pop er8,rt\n13b9e\ter0=[er2],r2 = 9,rt\n13b6a\ter8=[er0],rt\n09e4a\tr0=[er2]\n18274\tr0=[er0]\n298dc\ter0=[er0],pop xr8,rt\n09fdc\tr0=[ea],rt\n21f72\tsp=[er8],pop er8\n1c2c0\tqr0=[ea],lea D002H,[ea]=qr0\n\n# Some SUB gadgets:\n09e8a\ter0-=er2,rt\n29a40\ter0-=er12,pop er8,pop er12,rt\n09e98\tr0-=1,rt\n0ac5a\tr0-=r8,pop er8,rt\n\n# Some OR gadgets:\n122d4\tor r0,r1\n1a5c2\tor qr0,qr8\n\n# Some SLL/SRL gadgets:\n20830\tr0 >> 4,rt\n1bb28\tqr0 >> 4,rt\n1bb5c\tr0 << 4,rt\n1bb70\tr1 << 4,rt\n1bb5a\ter0 << 4,rt\n1bb56\txr0 << 4,rt\n1bb4e\tqr0 << 4,rt\n\n# Some CMP gadgets:\n0c790\ter0 - er2_gt,r0 = 0 |r0 = 1,rt\n09ae6\ter0 - er2_eq,r0 = 1,rt\n0c7a8\ter2 - er0_gt,r0 = 0 |r0 = 1,rt\n2abda\ter0 - er2_le,er0 = er2,rt\n297e2\ter8 - er0_lt,pop xr8\n091ec\tr0 - 0_lt,rt\n091f4\tr1 - 0_lt,rt\n\n# Some MUL gadgets:\n14bd4\ter0*=r2,er2 = er0,er0+=er4,rt\n14fca\ter0*=r2,er0+=er6,er10 = er0,rt\n\n# Some DIV gadgets:\n28C54\ter0/=r2,rt\n\n# BRK gadget\n33030\tbreak\n\n# Some other gadgets:\n0d71c\t[ea]+=1,r0=3\n2c81e\t[ea]-=1,pop xr4\n24836\tB LEAVE\n\n# BL gadgets:\n09450\tBL memcpy,pop er0\n203CC\tBL strcpy\n203E0\tBL strcat\n09D3A\tBL memset,pop er2\n23CAC\tBL delay,pop xr0\n20C40\tBL line_print\n23F62\tBL printline\n24004\tBL hex_byte,er6 = er0,er0 = er8,pop qr8\n20A50\tBL smart_strcpy,pop er8\n0A052\tBL zero_KO\n28AC2\tBL line_draw\n09AD4\tBL render.ddd4\n\n# some ea gadgets:\n09E96\t[ea+]=r0,r0-=1,bne\n09C20\tea_switchcase\n\n# special gadgets:\n17922   calc_func\n13344   calc_func_verify\n16082   cvt_hex_1\n160f8   cvt_hex_2\n10f20   memcpy_length_rn/8\n1700e   memcpy_length_rn/2, pop qr0\n\n# pop pc\n13324   pop pc\n\n# custom:\n18972   r0 = 1,pop er2\n09ca2   er2+=er10,[er8]+=er2,pop xr8\n18932   memcpy_indr\n";
+
+const DEFAULT_LABELS = "# For the emulator ROM.\n\n# Library builtins and BL-able addresses (functions).\n# Also contains data labels.\n# Does NOT include gadgets.\n\n# Arguments are 0-indexing.\n# All lines with '#' won't match the Lua pattern so they're effectively\n# comments. Comment for something is put **after** it.\n# Functions with trailing `__` are uncertain.\n\n# ========= Library function\n\n0E5C8\t\tstrcpy\n2EDA0\t\tstrcat\n26FFA\t\tmemcpy\n0A8AA\t\tmemmove\n29A2C\t\tstrlen\n1EB94\t\tmemset\n\n# ========= Smart functions (special case NULL)\n\n203C2\t\tsmart_strcpy\n203D6\t\tsmart_strcat\n203B8\t\tsmart_strlen_n\n\n# ========= Calculator functions\n\n2086C\t\tbasen_base_print\n23DCC\t\tsmallprint\n08F7C\t\tline_print.col_0\n08F7E\t\tline_print\n\n23DC6\t\tprintline\n\n09470\t\trender.e3d4\n0947C\t\trender.ddd4\n09D34\t\tmemzero\n\n26086\t\treset_routine\n\n24BD6\t\tget_string_constant\n\n08C0C\t\tfill_screen\n\n08F02\t\tstr_decompress_print\n\n09F3A\t\tdelay\n\n0A1CE\t\t_start\n293D8\t\tmain\n\n09440\t\tbuf1_to_buf2\n09458\t\tbuf2_to_buf1\n\n2AB26\t\tbyte_strlen_n\n\n23C4C\t\tdiagnostic_mode\n\n0ACB6\t\tf_0ACB6\n0AD92\t\tdiagnostic_wait_key\n\n0E826\t\tcheck_any_key_pressed__\n\n23CB4\t\tdiagnostic\n\n24344\t\tdiag_scr_888_ws\n23DD6\t\tdiag_scr_fill_ws\n23DDA     waitshift_striped\n23DDE\t\twaitshift\n23DE4\t\tdiag_scr_ckb1_ws\n23E40\t\tdiag_scr_ckb2_ws\n23E6A\t\tdiag_scr_version\n23E92\t\tdiag_print_ver\n23EEE\t\tdiag_checksum\n23F8A\t\tstore_reg_to_stack\n23EC8\t\tdiag_print_pd\n23F9A\t\tdiag_calc_checksum\n09A24\t\tpd_value\n24010\t\t_hex_byte\n09938\t\t_hex_to_dec\n2541A\t\tdiag_serial_num\n10E5E\t\tget_serial_num\n23D5A\t\tdiag_check_key\n2641A\t\tdiag_contrast\n\n2C58A\t\tdiag_8_keytest\n\n1F24C\t\tgetscancode\n2F5E8\t\tgetscancode_nodelay\n25C1A\t\tgetkeycode\n29892\t\tcvt_keycode\n\n0A0E0\t\tsetsfr\n\n19808\t\tbyte_to_bcd\n19832\t\tbcd_to_byte\n\n08E62\t\tline_draw\n091FC\t\tpixel_draw\n2EDC8\t\tline_print__call__\n0996C\t\tstr_decompress_print__call__\n099C2\t\tstr_decompress_print__call1__\n\n0904C\t\tchar_print_1byte\n09056 \t\tchar_print\n\n09238\t\tchar_get_14\n\n09318\t\tchar_get_l14\n\n0A16A\t\tzero_KO\n\n09DE6\t\tassign_var\n\n08C60\t\tbuffer_clear\n\n0AC30\t\tENTER\n0AC38\t\tLEAVE\n224DE\t\tLEAVE1\n22D66\t\tLEAVE2\n13D92\t\tLEAVE3\n2110A\t\tLEAVE4\n\n13B9A\t\tload_table\n\n1652C\t\tnum_add\n16538\t\tnum_sub\n16544\t\tnum_mul\n16550\t\tnum_div\n1D24A\t\tnum_add_1\n1D236\t\tnum_sub_1\n1D272\t\tnum_mul_1\n1D25E\t\tnum_div_1\n20C46\t\tnum_output_print\n1D950\t\tnum_fromdigit\n1DC2E\t\tnum_frombyte\n1D898\t\tnum_invalid__\n1DBE2\t\tnum_trunc__\n1DAF0\t\tnum_mulxp__\n1391A\t\tnum_random\n13A20\t\tnum_randint\n139D2\t\tnum_normalize\n1DC8A\t\tnum_to_byte\n279B6\t\tnum_to_str\n1ed56\t\tnum_to_hex\n1DCE4\t\tnum_cpy\n1D902\t\tnum_cmp\n16844\t\tnum_sin\n1684E\t\tnum_cos\n168E4\t\tnum_tan\n\n2AD4C\t\tdisplay_menu\n093D2\t\tdraw_byte\n\nd_0D000\t\treg0\nd_0D009\t\treg0.9\nd_0D110\t\tmodifiers\nd_0D111\t\tmode\nd_0D112\t\tsubmode\nd_0D11A\t\tnum_format\nd_0D11B\t\tnum_format_i\nd_0D11D\t\tangle_unit\nd_0D138\t\tdraw_mode\nd_0D180\t\tinput_range\nd_0D318\t\tunstable_char\nd_0D31A\t\tvar_m\nd_0D324\t\tvar_ans\nd_0D32E\t\tvar_a\nd_0D338\t\tvar_b\nd_0D342\t\tvar_c\nd_0D34C\t\tvar_d\nd_0D356\t\tvar_e\nd_0D360\t\tvar_f\nd_0D36A\t\tvar_x\nd_0D374\t\tvar_y\nd_0D37E\t\tvar_preans\nd_0D388\t\tvar_z\nd_0D392\t\tcalc_history\nd_0D139     current_screen_buffer\nd_0DDD4\t\tscreen_buffer\nd_0D137\t\tfont_size\nd_0D113\t\tcursor_noflash\nd_0DBD0\t\tmagic_string\n";
+
+// ═══════════════════════════════════════════════
+// EXAMPLES
+// ═══════════════════════════════════════════════
+const EXAMPLES = {
+  hello: `org 0xe9e0\n\nsetlr\nxr0 = 0x1111, adr_of text\nprintline\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4\n\ntext:\nhex 48 65 6c 6c 6f 20 35 38 30 56 4e 58\n0x00`,
+  waitshift: `org 0xe9e0\n\nsetlr\nxr0 = 0x1111, adr_of msg\nprintline\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4\n\nmsg:\nhex 50 72 65 73 73 20 53 48 49 46 54\n0x00`,
+  drawline: `org 0xe9e0\n\nsetlr\ner0 = 0x0000\ner2 = 0x00EF\nr0 = 0x00\nr1 = 0x08\nline_draw\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4`,
+  loop: `org 0xe9e0\n\nsetlr\n\nloop:\n  xr0 = 0x1111, adr_of msg\n  printline\n  render.ddd4\n  waitshift\n  buffer_clear\n  render.ddd4\n  goto loop\n\nmsg:\nhex 4c 6f 6f 70 69 6e 67 2e 2e 2e\n0x00`,
+  str: `org 0xe9e0\n\nsetlr\nxr0 = 0x1111, adr_of line1\nprintline\nxr0 = 0x2121, adr_of line2\nprintline\nrender.ddd4\nwaitshift\nbuffer_clear\nrender.ddd4\n\nline1:\nhex 42 61 73 68 61 6d 65 20 52 4f 50\n0x00\nline2:\nhex 66 78 2d 35 38 30 56 4e 58\n0x00`,
+};
+
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let pyodide = null;
+let lastHexResult = '';
+let currentGadgetsTxt = DEFAULT_GADGETS;
+let currentLabelsTxt = DEFAULT_LABELS;
+let _compiledCommands = {};
+let _compiledDatalabels = {};
+let _disasMap = {};
+
+// ═══════════════════════════════════════════════
+// UI REFS
+// ═══════════════════════════════════════════════
+const asmInput   = document.getElementById('asmInput');
+const outputBox  = document.getElementById('outputBox');
+const statusMsg  = document.getElementById('statusMsg');
+const statsMsg   = document.getElementById('statsMsg');
+const compileBtn = document.getElementById('compileBtn');
+const clearBtn   = document.getElementById('clearBtn');
+const copyHexBtn = document.getElementById('copyHexBtn');
+const pasteBtn   = document.getElementById('pasteBtn');
+const loaderBar  = document.getElementById('loaderBar');
+
+function setStatus(t, err=false) {
+  statusMsg.textContent = t;
+  statusMsg.style.color = err ? 'var(--red)' : 'var(--dim)';
+}
+function setOutput(html) { outputBox.innerHTML = html; }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ═══════════════════════════════════════════════
+// PYODIDE BOOTSTRAP
+// ═══════════════════════════════════════════════
+async function loadPyodide_() {
+  const lbl = document.getElementById('pyLoadLabel');
+  const bar = document.getElementById('pyLoadBar');
+  const setLbl = t => { if(lbl) lbl.textContent = t; };
+  const setBar = w => { if(loaderBar) loaderBar.style.width = w; };
+
+  setLbl('⏳ fetching python...');
+  setBar('10%');
+  await new Promise((res, rej) => {
+    if (window.loadPyodide) { res(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+    s.onload = res;
+    s.onerror = () => rej(new Error('Failed to load pyodide.js'));
+    document.head.appendChild(s);
+  });
+
+  setBar('40%'); setLbl('⏳ initialising python...');
+  if (bar) bar.classList.remove('running');
+  pyodide = await window.loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/' });
+
+  setBar('70%'); setLbl('⏳ setting up compiler...');
+  const charTable = JSON.parse(document.getElementById('charTable').textContent);
+  pyodide.globals.set('_CHAR_TABLE', pyodide.toPy(charTable));
+
+  await pyodide.runPythonAsync(`
+import re, sys
+from functools import lru_cache
+
+max_call_adr = 0x3ffff
+npress = [1]*256
+
+def byte_to_key(b):
+    return '<NUL>' if b==0 else f'<{b:02x}>'
+
+def get_npress(cc):
+    if isinstance(cc,int): cc=(cc,)
+    return sum(npress[c] for c in cc)
+
+def get_npress_adr(adrs):
+    if isinstance(adrs,int): adrs=(adrs,)
+    return sum(get_npress((a&0xFF,(a>>8)&0xFF)) for a in adrs)
+
+def optimize_adr(adr):
+    return min((adr,adr^1), key=get_npress_adr)
+
+def note(st):
+    global _note_log
+    _note_log += st
+
+def to_lc(s): return s.lower()
+
+def canon(st):
+    st=st.strip()
+    st=re.sub(r' *([^a-z0-9]) *',r'\\1',st)
+    return st
+
+def del_comment(line):
+    return (line+'#')[:line.find('#')].rstrip()
+
+char_to_hex = {chr(int(cp)): hx for cp,hx in _CHAR_TABLE.items()}
+
+commands   = {}
+datalabels = {}
+
+def sizeof_reg(r):
+    return {'r':1,'e':2,'x':4,'q':8}[r[0]]
+
+result=[]; labels={}; adr_of_cmds=[]; adr_arith_cmds=[]; pr_len_cmds=[]
+home=None; in_comment=False; _note_log=''
+
+def reset_state():
+    global result,labels,adr_of_cmds,adr_arith_cmds,pr_len_cmds,home,in_comment,_note_log
+    result=[]; labels={}; adr_of_cmds=[]; adr_arith_cmds=[]; pr_len_cmds=[]
+    home=None; in_comment=False; _note_log=''
+
+def process(line):
+    global result,labels,adr_of_cmds,adr_arith_cmds,pr_len_cmds,home,in_comment
+    if not line or line.isspace(): return
+    if line.startswith('/*'): in_comment=True; return
+    if '*/' in line: in_comment=False; return
+    if in_comment: return
+    if ';' in line:
+        for c in line.split(';'): process(to_lc(c))
+        return
+    if line.strip() and line.strip()[-1]==':':
+        lbl=to_lc(line[:-1])
+        assert lbl not in labels, f'Duplicated label: {lbl}'
+        labels[lbl]=len(result); return
+    if line.startswith('0x'):
+        if '+' in line:
+            hp,dp=line.split('+'); rv=int(hp,16)+int(dp); nb=len(hp)//2-1
+            for _ in range(nb): result.append(rv&0xFF); rv>>=8
+        elif '-' in line:
+            hp,dp=line.split('-'); rv=int(hp,16)-int(dp); nb=len(hp)//2-1
+            for _ in range(nb): result.append(rv&0xFF); rv>>=8
+        else:
+            assert len(line)%2==0,'Invalid data length'
+            nb=len(line)//2-1; data=int(line,16)
+            for _ in range(nb): result.append(data&0xFF); data>>=8
+        return
+    if line.startswith('hex'):
+        hd=line[3:].strip()
+        if not hd: raise ValueError('Missing hex data after "hex"')
+        hd=''.join(hd.split())
+        if not all(c in '0123456789abcdefABCDEF' for c in hd):
+            raise ValueError(f'Invalid hex: {hd}')
+        if len(hd)%2!=0: raise ValueError('Hex must have even digits')
+        for i in range(0,len(hd),2): result.append(int(hd[i:i+2],16))
+        return
+    if line.startswith('call'):
+        try: adr=int(line[4:],16)
+        except ValueError:
+            adr,tags=commands[line[4:].strip()]
+            for tag in tags:
+                if tag.startswith('warning'): note(tag+'\\n')
+        assert 0<=adr<=max_call_adr
+        adr=optimize_adr(adr)
+        process(f'0x{adr+0x30300000:08x}'); return
+    if line.startswith('goto'):
+        lbl=to_lc(line[4:])
+        process(f'er14=adr_of [-2] {lbl}')
+        process('call sp=er14,pop er14'); return
+    if line.startswith('adr_of'):
+        l2=to_lc(line[6:].strip())
+        if l2[0]=='[':
+            i=l2.index(']'); off=int(l2[1:i],0); lbl=l2[i+1:].strip()
+        else:
+            off=0; lbl=l2.strip()
+        adr_of_cmds.append((len(result),off,lbl)); result.extend((0,0)); return
+    if line in datalabels:
+        process(f'{line}+0'); return
+    if '+' in line and line[:line.find('+')] in datalabels:
+        lbl,off=line.split('+')
+        process(f'0x{datalabels[lbl]+int(off,0):04x}'); return
+    if line in commands:
+        process('call '+to_lc(line)); return
+    if line.startswith('pr_length'):
+        pr_len_cmds.append(len(result)); result.extend((0,0)); return
+    if line.startswith('str'):
+        raise ValueError('str"..." not supported — use hex XX XX or 0xXXXX instead')
+    if '=' in line:
+        i=line.index('='); reg,val=line[:i],line[i+1:].lstrip()
+        assert '=' not in val
+        def split_val(v):
+            parts=[]; buf=''; toks=v.split(','); j=0
+            while j<len(toks):
+                t=toks[j].strip()
+                buf=(buf+','+t) if buf else t
+                s=buf.strip()
+                if s.startswith('adr_of'):
+                    if '[' not in s or s.count('[')==s.count(']'): parts.append(s); buf=''
+                else:
+                    parts.append(s); buf=''
+                j+=1
+            if buf: parts.append(buf.strip())
+            return parts
+        process(f'call pop {reg}'); l1=len(result)
+        for p in split_val(val): process(p)
+        assert len(result)-l1==sizeof_reg(reg), f'Size mismatch: {line}'; return
+    if line.startswith('org'):
+        global home
+        hx=eval(line[3:]); h1=hx-len(result)
+        assert home is None or home==h1,'Inconsistent home'
+        home=h1; return
+    if line.startswith('adr_arith'):
+        lmp=len(line)-1
+        while lmp>0:
+            if line[lmp]=='-' and 'adr_arith' in line[lmp:]: break
+            lmp-=1
+        if lmp<=0: raise ValueError(f'Invalid adr_arith: {line}')
+        def pp(part):
+            part=part.strip()
+            if part.startswith('adr_arith'): part=part[9:].strip()
+            off=0
+            if '[' in part and ']' in part:
+                si=part.index('['); ei=part.index(']')
+                off=int(part[si+1:ei],0); lbl=part[ei+1:].strip()
+            else: lbl=part.strip()
+            return off,lbl
+        lo,ll=pp(line[9:lmp].strip()); ro,rl=pp(line[lmp+1:].strip())
+        adr_arith_cmds.append((len(result),lo,ll,ro,rl)); result.append(0); return
+    if line.startswith('$'):
+        x=eval(line[1:])
+        if isinstance(x,str): process(x)
+        elif isinstance(x,(list,tuple)):
+            for c in x: process(c)
+        return
+    if line.startswith('setup_loop'):
+        parts=line.split(',')
+        if len(parts)==2: src=parts[0].split()[1].strip(); sb=parts[1].strip(); lbl='home'
+        elif len(parts)==3: src=parts[0].split()[1].strip(); sb=parts[1].strip(); lbl=parts[2].strip() if parts[2].strip()!='None' else 'home'
+        else: raise ValueError(f'Invalid setup_loop: {line}')
+        code=f"""restore:
+    setlr
+    DI,RT
+    xr0=adr_of length,0x01,0x00
+    [er0]=er2,rt
+    qr0=pr_length,{sb},{src},0x0000
+    0x8932
+length:
+    0x0800
+    0x0000
+set_sp:
+    er6=adr_of [-2] {lbl}
+    sp=er6,pop er8"""
+        for cl in code.strip().split('\\n'): process(canon(del_comment(cl)).lower())
+        return
+    assert False, f'Unrecognized: {line!r}'
+
+def finish():
+    global result
+    for pos,ll,lbl_l,rl,lbl_r in adr_arith_cmds:
+        la=labels[lbl_l]+ll; ra=labels[lbl_r]+rl; result[pos]=(la-ra)&0xFF
+    for pos in pr_len_cmds:
+        pl=len(result); result[pos]=pl&0xFF; result[pos+1]=(pl>>8)&0xFF
+
+def compile_program(src_text, fmt='hex'):
+    reset_state()
+    for line in src_text.split('\\n'):
+        line=canon(del_comment(line)).lower()
+        try: process(line)
+        except Exception as e:
+            raise RuntimeError(f'Error on line {repr(line)}: {e}') from e
+    finish()
+    adr_res=[(sa,labels[tl]+off) for sa,off,tl in adr_of_cmds]
+    global home
+    if home is None:
+        home=0xE9E0
+        if 'home' in labels: home-=labels['home']
+    for sa,ho in adr_res:
+        ta=home+ho; result[sa]=ta&0xFF; result[sa+1]=ta>>8
+    lbls=[]
+    for lbl,off in sorted(labels.items(),key=lambda x:x[1]):
+        lbls.append(f'{lbl}: 0x{home+off:04X}')
+    out=f'0x{home:04x}: '+' '.join(f'{b:02x}' for b in result)
+    return out,'\\n'.join(lbls),len(result)
+
+print("Compiler Python ready")
+`);
+
+  setBar('100%');
+  await new Promise(r=>setTimeout(r,200));
+  if (lbl) lbl.textContent = '✓ python ready';
+  if (bar) bar.style.display='none';
+  window._pyodideInstance = pyodide;
+  setStatus('> python ready — loading gadgets...');
+}
+
+loadPyodide_().catch(e => {
+  document.getElementById('pyLoadLabel').textContent = '❌ python failed';
+  document.getElementById('pyLoadLabel').style.color = 'var(--red)';
+  document.getElementById('pyLoadBar').style.display = 'none';
+  setStatus('❌ compiler unavailable', true);
+});
+
+// ═══════════════════════════════════════════════
+// DATA FILE PARSERS
+// ═══════════════════════════════════════════════
+let _disasMap2 = {};
+
+function parseGadgets(text) {
+  const out = {};
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.split('#')[0].trim();
+    if (!line) continue;
+    const parts = line.split(/\t+| {3,}/);
+    if (parts.length < 2) continue;
+    const addr = parseInt(parts[0].trim(), 16);
+    let name = parts.slice(1).join(' ').trim()
+      .replace(/\s*=\s*/g,'=').replace(/\s*\+=\s*/g,'+=')
+      .replace(/\s*-=\s*/g,'-=').replace(/\s*,\s*/g,',')
+      .replace(/\s+/g,' ').toLowerCase();
+    name = name.replace(/^bl\s+/, 'bl');
+    if (!isNaN(addr) && name) out[name] = { addr, tags: [] };
+  }
+  return out;
+}
+
+function parseLabels(text) {
+  const commands = {}, datalabels = {};
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.split('#')[0].trim();
+    if (!line || line.startsWith('.')) continue;
+    const parts = line.split(/\t+| {3,}/);
+    if (parts.length < 2) continue;
+    const key = parts[0].trim();
+    const name = parts[1].trim();
+    if (!name || name.startsWith('.')) continue;
+    const dm = key.match(/^d_([0-9a-fA-F]+)$/i);
+    if (dm) { datalabels[name] = parseInt(dm[1], 16); continue; }
+    const am = key.match(/^([0-9a-fA-F]+)$/i);
+    if (am) commands[name.toLowerCase()] = { addr: parseInt(am[1], 16), tags: [] };
+  }
+  return { commands, datalabels };
+}
+
+async function injectDataFiles(gadgetsTxt, labelsTxt) {
+  let commands = {}, datalabels = {};
+  if (gadgetsTxt) Object.assign(commands, parseGadgets(gadgetsTxt));
+  if (labelsTxt) {
+    const r = parseLabels(labelsTxt);
+    Object.assign(commands, r.commands);
+    Object.assign(datalabels, r.datalabels);
+  }
+  commands['setlr_pc'] = { addr: 0x308D0, tags: [] };
+
+  _compiledCommands = commands;
+  _compiledDatalabels = datalabels;
+
+  if (pyodide) {
+    pyodide.globals.set('_CMD_DATA', pyodide.toPy({ commands, datalabels }));
+    await pyodide.runPythonAsync(`
+_d = _CMD_DATA
+commands   = {k: (v['addr'], tuple(v['tags'])) for k,v in _d['commands'].items()}
+datalabels = dict(_d['datalabels'])
+print(f"Commands: {len(commands)}, Datalabels: {len(datalabels)}")
+`);
+    compileBtn.disabled = false;
+  }
+
+  const nCmd = Object.keys(commands).length;
+  const nDl  = Object.keys(datalabels).length;
+  setStatus(`> ${nCmd} gadgets | ${nDl} datalabels_`);
+  return { commands, datalabels };
+}
+
+// Initial load
+(function tryLoad() {
+  if (pyodide) injectDataFiles(DEFAULT_GADGETS, DEFAULT_LABELS);
+  else setTimeout(tryLoad, 500);
+})();
+
+// ═══════════════════════════════════════════════
+// COMPILE
+// ═══════════════════════════════════════════════
+let outputFmt = 'hex';
+document.getElementById('fmtHex').onclick = () => {
+  outputFmt = 'hex';
+  document.getElementById('fmtHex').classList.add('active');
+  document.getElementById('fmtBytes').classList.remove('active');
+};
+document.getElementById('fmtBytes').onclick = () => {
+  outputFmt = 'bytes';
+  document.getElementById('fmtBytes').classList.add('active');
+  document.getElementById('fmtHex').classList.remove('active');
+};
+
+async function doCompile() {
+  if (!pyodide) { setStatus('⏳ Python not ready', true); return; }
+  const src = asmInput.value.trim();
+  if (!src) { setStatus('⚠ no source code', true); return; }
+  compileBtn.disabled = true;
+  setStatus('⏳ compiling…');
+  setOutput('<span class="tok-note">// compiling…</span>');
+  try {
+    const t0 = performance.now();
+    pyodide.globals.set('_src', src);
+    const res = await pyodide.runPythonAsync("compile_program(_src,'hex')");
+    const arr = res.toJs ? res.toJs() : res;
+    const [out, lblInfo, byteCount] = arr;
+    const dt = ((performance.now()-t0)/1000).toFixed(3);
+    const ci = out.indexOf(':');
+    const addr = out.slice(0,ci);
+    const bytes = out.slice(ci+1).trim();
+    const byteArr = bytes.split(' ');
+
+    let display;
+    if (outputFmt === 'bytes') {
+      display = byteArr.map(b => parseInt(b,16)).join(', ');
+    } else {
+      display = bytes;
+    }
+
+    let lblHtml = '';
+    if (lblInfo) {
+      lblHtml = '\n\n' + lblInfo.split('\n').map(l => {
+        const [n,a] = l.split(': ');
+        return `<span class="tok-label">; ${escHtml(n)}: <span class="tok-addr">${a}</span></span>`;
+      }).join('\n');
+    }
+    lastHexResult = out;
+    const colored = byteArr.map(b=>`<span class="tok-hex">${b}</span>`).join(' ');
+    setOutput(`<span class="tok-addr">${addr}:</span>\n${colored}${lblHtml}`);
+    statsMsg.textContent = `bytes: ${byteCount} | time: ${dt}s`;
+    setStatus(`> compiled ${byteCount} bytes_`);
+  } catch(e) {
+    setOutput(`<span class="tok-err">// Error:\n${escHtml(e.message||String(e))}</span>`);
+    setStatus('❌ compile error', true);
+  } finally {
+    compileBtn.disabled = false;
+  }
+}
+
+compileBtn.onclick = doCompile;
+asmInput.addEventListener('keydown', e => {
+  if ((e.ctrlKey||e.metaKey) && e.key==='Enter') { e.preventDefault(); doCompile(); }
+});
+
+clearBtn.onclick = () => { asmInput.value=''; asmInput.focus(); setOutput('<span class="tok-note">// cleared_</span>'); setStatus('> ready_'); statsMsg.textContent=''; };
+copyHexBtn.onclick = () => {
+  if (!lastHexResult) { setStatus('⚠ nothing to copy', true); return; }
+  const ci = lastHexResult.indexOf(':');
+  const hex = lastHexResult.slice(ci+1).trim();
+  navigator.clipboard.writeText(hex).then(() => setStatus('> copied to clipboard_')).catch(()=>setStatus('⚠ clipboard failed',true));
+};
+pasteBtn.onclick = async () => {
+  try {
+    const t = await navigator.clipboard.readText();
+    asmInput.value = t; asmInput.focus();
+    setStatus('> pasted_');
+  } catch { setStatus('⚠ clipboard read failed',true); }
+};
+
+document.querySelectorAll('.ex-btn').forEach(btn => {
+  btn.onclick = () => {
+    const k = btn.dataset.example;
+    if (EXAMPLES[k]) { asmInput.value = EXAMPLES[k]; asmInput.focus(); setStatus(`> loaded example: ${k}_`); }
+  };
+});
+
+// ═══════════════════════════════════════════════
+// DECOMPILER
+// ═══════════════════════════════════════════════
+document.getElementById('decompBtn').onclick = async () => {
+  const hexStr = document.getElementById('dHexInput').value.trim();
+  const addrStr = document.getElementById('dAddrInp').value.trim();
+  if (!hexStr) { document.getElementById('dStatusMsg').textContent='⚠ no input'; return; }
+  const startAddr = parseInt(addrStr, 16) || 0xE9E0;
+  const bytes = hexStr.replace(/[^0-9a-fA-F]/g,' ').trim().split(/\s+/).filter(s=>s.length===2).map(s=>parseInt(s,16));
+  if (!bytes.length) { document.getElementById('dStatusMsg').textContent='⚠ invalid hex'; return; }
+
+  const addrToName = {};
+  for (const [name, info] of Object.entries(_compiledCommands)) {
+    const a = info.addr;
+    if (!addrToName[a]) addrToName[a] = name;
+    if (!addrToName[a^1]) addrToName[a^1] = name;
+  }
+
+  const out = document.getElementById('decompOutput');
+  let html = '';
+  let i = 0;
+  while (i < bytes.length) {
+    const pos = startAddr + i;
+    const posHex = pos.toString(16).toUpperCase().padStart(5,'0');
+    if (i + 4 <= bytes.length) {
+      const w0 = bytes[i] | (bytes[i+1]<<8);
+      const w1 = bytes[i+2] | (bytes[i+3]<<8);
+      const raw32 = (bytes[i] | (bytes[i+1]<<8) | (bytes[i+2]<<16) | (bytes[i+3]*0x1000000)) >>> 0;
+      // Check if it's a call gadget (0x30300000 + addr*2 pattern)
+      const callBase = 0x30300000;
+      if ((raw32 & 0xFFFE0000) === (callBase & 0xFFFE0000) || raw32 >= 0x30300000) {
+        const gadgetAddr = (raw32 - 0x30300000) >>> 0;
+        if (gadgetAddr <= 0x3FFFF) {
+          const name = addrToName[gadgetAddr] || addrToName[gadgetAddr^1];
+          const hexBytes = bytes.slice(i,i+4).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+          if (name) {
+            html += `<div class="gadget-line"><span class="d-addr">${posHex}</span><span class="hex-badge">${hexBytes}</span><span class="d-name">${escHtml(name)}</span></div>`;
+          } else {
+            html += `<div class="gadget-line"><span class="d-addr">${posHex}</span><span class="hex-badge">${hexBytes}</span><span class="d-unk">call 0x${gadgetAddr.toString(16).toUpperCase()}</span></div>`;
+          }
+          i += 4; continue;
+        }
+      }
+      // 2-byte data
+      const hexBytes2 = bytes.slice(i,i+2).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+      html += `<div class="gadget-line"><span class="d-addr">${posHex}</span><span class="hex-badge">${hexBytes2}</span><span class="d-data">0x${w0.toString(16).toUpperCase().padStart(4,'0')}</span></div>`;
+      i += 2;
+    } else {
+      const hexByte = bytes[i].toString(16).padStart(2,'0');
+      html += `<div class="gadget-line"><span class="d-addr">${posHex}</span><span class="hex-badge">${hexByte}</span><span class="d-data">0x${hexByte.toUpperCase()}</span></div>`;
+      i++;
+    }
+  }
+  out.innerHTML = html || '<span class="tok-note">// no output</span>';
+  document.getElementById('dStatusMsg').textContent = `> decompiled ${bytes.length} bytes_`;
+  document.getElementById('dStatsMsg').textContent = `start: 0x${startAddr.toString(16).toUpperCase()}`;
+};
+
+document.getElementById('dPasteBtn').onclick = async () => {
+  try {
+    const t = await navigator.clipboard.readText();
+    document.getElementById('dHexInput').value = t;
+  } catch { document.getElementById('dStatusMsg').textContent='⚠ clipboard read failed'; }
+};
+document.getElementById('dClearBtn').onclick = () => {
+  document.getElementById('dHexInput').value = '';
+  document.getElementById('decompOutput').innerHTML = '<span class="tok-note">// cleared_</span>';
+  document.getElementById('dStatusMsg').textContent = '> ready_';
+};
+
+// ═══════════════════════════════════════════════
+// GADGET EDITOR
+// ═══════════════════════════════════════════════
+const gadgetsTA = document.getElementById('gadgetsTextarea');
+const labelsTA  = document.getElementById('labelsTextarea');
+const gadgetSearch = document.getElementById('gadgetSearch');
+const gadgetListPreview = document.getElementById('gadgetListPreview');
+const gadgetStatusMsg = document.getElementById('gadgetStatusMsg');
+const gadgetStatsMsg = document.getElementById('gadgetStatsMsg');
+
+// Init textareas with default content
+gadgetsTA.value = DEFAULT_GADGETS;
+labelsTA.value  = DEFAULT_LABELS;
+
+function renderGadgetPreview(filter='') {
+  const all = parseGadgets(gadgetsTA.value);
+  const labParsed = parseLabels(labelsTA.value);
+  const combined = { ...all, ...labParsed.commands };
+
+  let html = '';
+  let count = 0;
+  const fl = filter.toLowerCase();
+
+  // Also show comments/section headers
+  const lines = gadgetsTA.value.split(/\r?\n/);
+  const shown = new Set();
+
+  for (const line of lines) {
+    const raw = line.trim();
+    if (!raw) continue;
+    if (raw.startsWith('#')) {
+      if (!fl || raw.toLowerCase().includes(fl)) {
+        html += `<div class="gadget-row is-comment"><span class="g-name">${escHtml(raw)}</span></div>`;
+      }
+      continue;
+    }
+    const parts = raw.split(/\t+| {3,}/);
+    if (parts.length < 2) continue;
+    const addrStr = parts[0].trim();
+    const nameRaw = parts.slice(1).join('\t').trim().split('#')[0].trim();
+    if (!nameRaw) continue;
+    const addr = parseInt(addrStr, 16);
+    if (isNaN(addr)) continue;
+    if (fl && !nameRaw.toLowerCase().includes(fl) && !addrStr.toLowerCase().includes(fl)) continue;
+    shown.add(nameRaw.toLowerCase());
+    html += `<div class="gadget-row" data-insert="${escHtml(nameRaw.toLowerCase())}"><span class="g-addr">${addrStr.toUpperCase()}</span><span class="g-name">${escHtml(nameRaw)}</span></div>`;
+    count++;
+  }
+
+  // Also add labels entries
+  const labLines = labelsTA.value.split(/\r?\n/);
+  for (const line of labLines) {
+    const raw = line.trim();
+    if (!raw || raw.startsWith('#') || raw.startsWith('.')) continue;
+    const parts = raw.split(/\t+| {3,}/);
+    if (parts.length < 2) continue;
+    const key = parts[0].trim();
+    const nm  = parts[1].trim().split('#')[0].trim();
+    if (!nm || nm.startsWith('.')) continue;
+    if (key.match(/^d_/i)) continue; // data labels skip
+    const am = key.match(/^([0-9a-fA-F]+)$/i);
+    if (!am) continue;
+    if (fl && !nm.toLowerCase().includes(fl) && !key.toLowerCase().includes(fl)) continue;
+    if (shown.has(nm.toLowerCase())) continue;
+    html += `<div class="gadget-row" data-insert="${escHtml(nm.toLowerCase())}"><span class="g-addr">${key.toUpperCase()}</span><span class="g-name" style="color:var(--blue)">${escHtml(nm)}</span><span class="g-comment">label</span></div>`;
+    count++;
+  }
+
+  gadgetListPreview.innerHTML = html || `<div style="padding:10px 14px;color:var(--dimmer);font-size:.75rem;">no match</div>`;
+  document.getElementById('gadgetCount').textContent = `${count} entries`;
+
+  gadgetListPreview.querySelectorAll('.gadget-row[data-insert]').forEach(row => {
+    row.onclick = () => {
+      const ins = row.dataset.insert;
+      if (!ins) return;
+      const ta = asmInput;
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      ta.value = ta.value.slice(0,start) + ins + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = start + ins.length;
+      ta.focus();
+      // Switch to compiler tab
+      switchTab('compile');
+      setStatus(`> inserted: ${ins}_`);
+    };
+  });
+}
+
+gadgetSearch.addEventListener('input', () => renderGadgetPreview(gadgetSearch.value));
+
+document.getElementById('saveGadgetsBtn').onclick = async () => {
+  currentGadgetsTxt = gadgetsTA.value;
+  currentLabelsTxt  = labelsTA.value;
+  gadgetStatusMsg.textContent = '⏳ applying...';
+  try {
+    await injectDataFiles(currentGadgetsTxt, currentLabelsTxt);
+    gadgetStatusMsg.textContent = '> applied — gadgets reloaded_';
+    const badge = document.getElementById('savedBadge');
+    badge.classList.add('show');
+    setTimeout(() => badge.classList.remove('show'), 2000);
+    renderGadgetPreview(gadgetSearch.value);
+  } catch(e) {
+    gadgetStatusMsg.textContent = '❌ error: ' + e.message;
+    gadgetStatusMsg.style.color = 'var(--red)';
+  }
+};
+
+document.getElementById('resetGadgetsBtn').onclick = () => {
+  if (!confirm('Reset gadgets and labels to default?')) return;
+  gadgetsTA.value = DEFAULT_GADGETS;
+  labelsTA.value  = DEFAULT_LABELS;
+  gadgetStatusMsg.textContent = '> reset to default — click [ APPLY ] to reload_';
+  renderGadgetPreview(gadgetSearch.value);
+};
+
+document.getElementById('exportGadgetsBtn').onclick = () => {
+  const blob = new Blob([gadgetsTA.value], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='gadgets.txt'; a.click();
+  URL.revokeObjectURL(url);
+  // Also export labels
+  const blob2 = new Blob([labelsTA.value], {type:'text/plain'});
+  const url2 = URL.createObjectURL(blob2);
+  const a2 = document.createElement('a'); a2.href=url2; a2.download='labels.txt'; a2.click();
+  URL.revokeObjectURL(url2);
+  gadgetStatusMsg.textContent = '> exported gadgets.txt and labels.txt_';
+};
+
+document.getElementById('importGadgetsBtn').onclick = () => {
+  document.getElementById('importFileInput').click();
+};
+document.getElementById('importFileInput').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const txt = ev.target.result;
+    // Guess which file based on name
+    if (file.name.toLowerCase().includes('label')) {
+      labelsTA.value = txt;
+      gadgetStatusMsg.textContent = `> imported labels: ${file.name}`;
+    } else {
+      gadgetsTA.value = txt;
+      gadgetStatusMsg.textContent = `> imported gadgets: ${file.name}`;
+    }
+    renderGadgetPreview(gadgetSearch.value);
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+};
+
+// ═══════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchTab(tab) {
+  document.getElementById('sectionCompile').style.display = tab==='compile' ? '' : 'none';
+  document.getElementById('sectionDecomp').style.display  = tab==='decomp'  ? '' : 'none';
+  document.getElementById('gadgetEditorSection').style.display = tab==='gadgets' ? '' : 'none';
+  document.getElementById('tabCompile').classList.toggle('active', tab==='compile');
+  document.getElementById('tabDecomp').classList.toggle('active',  tab==='decomp');
+  document.getElementById('tabGadgets').classList.toggle('active', tab==='gadgets');
+  if (tab==='gadgets') renderGadgetPreview(gadgetSearch.value);
+}
+
+document.getElementById('tabCompile').onclick = () => switchTab('compile');
+document.getElementById('tabDecomp').onclick  = () => switchTab('decomp');
+document.getElementById('tabGadgets').onclick = () => switchTab('gadgets');
+
+// Initial preview render (after a tick)
+setTimeout(() => renderGadgetPreview(''), 100);
+</script>
 </body>
 </html>
