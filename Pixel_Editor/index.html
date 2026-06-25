@@ -152,13 +152,35 @@ textarea:focus{border-color:var(--amber2);}
 .stats-pill{font-size:.68rem;color:var(--dimmer);}
 
 /* ── PREVIEW ── */
-#preview{display:block;margin:8px auto;border:1px solid var(--border);}
+#preview{display:block;margin:8px auto;border:1px solid var(--border);max-width:100%;height:auto;}
 
 .addr-inp{
   background:var(--bg);border:1px solid var(--border2);color:var(--amber);
   font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:4px 8px;
   width:50px;text-align:center;outline:none;
 }
+
+/* ── THRESHOLD SLIDER ── */
+.threshold-row{display:flex;align-items:center;gap:8px;margin:8px 0;flex-wrap:wrap;}
+.threshold-row label{font-size:.65rem;color:var(--dim);letter-spacing:.06em;white-space:nowrap;}
+.threshold-row .val{font-size:.72rem;color:var(--amber2);min-width:28px;text-align:center;}
+input[type="range"]{
+  -webkit-appearance:none;appearance:none;
+  flex:1;min-width:80px;max-width:200px;height:4px;
+  background:linear-gradient(90deg,var(--border2) 0%,var(--amber) 100%);
+  border:1px solid var(--border2);outline:none;cursor:pointer;
+  touch-action:none;
+}
+input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;
+  background:var(--amber2);border:1px solid var(--amber);
+  cursor:pointer;
+}
+input[type="range"]::-moz-range-thumb{
+  width:14px;height:14px;background:var(--amber2);
+  border:1px solid var(--amber);cursor:pointer;border-radius:0;
+}
+.thr-btn{padding:3px 7px;font-size:.68rem;min-width:32px;}
 </style>
 </head>
 <body>
@@ -174,6 +196,7 @@ textarea:focus{border-color:var(--amber2);}
   <div class="toolbar">
     <button id="createGridBtn">[ TẠO LƯỚI ]</button>
     <button id="clearGridBtn">[ XÓA ]</button>
+    <button id="invertBtn">[ ĐẢO NGƯỢC ]</button>
     <button id="exportBtn">[ XUẤT HEX ]</button>
     <span style="color:var(--dim);font-size:.7rem;margin-left:4px">W:</span>
     <input class="addr-inp" type="number" id="cols" value="16" min="1" max="192">
@@ -230,6 +253,15 @@ textarea:focus{border-color:var(--amber2);}
         <input class="addr-inp" type="number" id="imgH" value="32" min="1" max="63">
       </div>
       <input type="file" id="imageLoader" accept="image/*">
+      <div class="threshold-row">
+        <label>THR:</label>
+        <button class="thr-btn" data-step="-10">-10</button>
+        <button class="thr-btn" data-step="-1">-1</button>
+        <input type="range" id="threshold" min="0" max="255" value="128">
+        <button class="thr-btn" data-step="1">+1</button>
+        <button class="thr-btn" data-step="10">+10</button>
+        <span class="val" id="thresholdVal">128</span>
+      </div>
       <div style="margin-top:6px"><button id="processImageBtn">[ CHUYỂN ĐỔI ]</button></div>
       <canvas id="preview" width="256" height="128"></canvas>
     </div>
@@ -378,9 +410,23 @@ textarea:focus{border-color:var(--amber2);}
   setStatus('> hex loaded_');
 }
 
+  const threshold=document.getElementById('threshold');
+  const thresholdVal=document.getElementById('thresholdVal');
+  function updateThreshold(val){
+    threshold.value=Math.min(255,Math.max(0,val));
+    thresholdVal.textContent=threshold.value;
+    if(imageLoader.files[0]) processImage();
+  }
+  threshold.addEventListener('input',()=>updateThreshold(parseInt(threshold.value)));
+  threshold.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+  document.querySelectorAll('.thr-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>updateThreshold(parseInt(threshold.value)+parseInt(btn.dataset.step)));
+  });
+
   function processImage(){
     const file=imageLoader.files[0];if(!file) return setStatus('> no image_',true);
     let w=Math.min(192,Math.max(1,parseInt(imgW.value))),h=Math.min(63,Math.max(1,parseInt(imgH.value)));
+    const thr=parseInt(threshold.value);
     const reader=new FileReader();
     reader.onload=e=>{
       const img=new Image();
@@ -389,22 +435,32 @@ textarea:focus{border-color:var(--amber2);}
         const tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
         const tCtx=tmp.getContext('2d');tCtx.drawImage(img,0,0,w,h);
         const data=tCtx.getImageData(0,0,w,h).data;
-        preview.width=w*6;preview.height=h*6;
+        const maxPW=Math.min(600,Math.floor((document.querySelector('.output-section').clientWidth||400)-24));
+        const px=Math.max(1,Math.floor(maxPW/w));
+        preview.width=w*px;preview.height=h*px;
         const pctx=preview.getContext('2d');
         let idx=0;
         for(let y=0;y<h;y++) for(let x=0;x<w;x++){
-          const gray=(data[idx]+data[idx+1]+data[idx+2])/3,active=gray<128;
+          const gray=(data[idx]+data[idx+1]+data[idx+2])/3,active=gray<thr;
           if(active) setPixel(y,x,true);
-          pctx.fillStyle=active?'#ff8c00':'#0a0800';pctx.fillRect(x*6,y*6,6,6);
+          pctx.fillStyle=active?'#ff8c00':'#0a0800';pctx.fillRect(x*px,y*px,px,px);
           idx+=4;
         }
-        generateData();setStatus('> image converted_');
+        generateData();setStatus(`> image converted (thr=${thr})_`);
       };img.src=e.target.result;
     };reader.readAsDataURL(file);
   }
 
+  function invertGrid(){
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) grid[r][c]=!grid[r][c];
+    redrawCanvas();
+    generateData();
+    setStatus('> inverted_');
+  }
+
   document.getElementById('createGridBtn').onclick=()=>{createGrid();generateData();};
   document.getElementById('clearGridBtn').onclick=clearGrid;
+  document.getElementById('invertBtn').onclick=invertGrid;
   document.getElementById('exportBtn').onclick=generateData;
   document.getElementById('loadHexBtn').onclick=loadHex;
   document.getElementById('processImageBtn').onclick=processImage;
