@@ -198,6 +198,7 @@ input[type="range"]::-moz-range-thumb{
     <button id="clearGridBtn">[ XÓA ]</button>
     <button id="invertBtn">[ ĐẢO NGƯỢC ]</button>
     <button id="exportBtn">[ XUẤT HEX ]</button>
+    <button id="downloadPngBtn">[ TẢI ẢNH PNG ]</button>
     <span style="color:var(--dim);font-size:.7rem;margin-left:4px">W:</span>
     <input class="addr-inp" type="number" id="cols" value="16" min="1" max="192">
     <span style="color:var(--dim);font-size:.7rem">H:</span>
@@ -331,6 +332,26 @@ input[type="range"]::-moz-range-thumb{
     if(!active){ctx.strokeStyle='#3a2a00';ctx.lineWidth=0.5;ctx.strokeRect(col*cellSize,row*cellSize,cellSize,cellSize);}
   }
 
+  function downloadPng(){
+    const out=document.createElement('canvas');
+    out.width=cols;out.height=rows;
+    const octx=out.getContext('2d');
+    octx.fillStyle='#000000';octx.fillRect(0,0,cols,rows);
+    octx.fillStyle='#ffffff';
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      if(grid[r][c]) octx.fillRect(c,r,1,1);
+    }
+    out.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=`pixelart_${cols}x${rows}.png`;
+      document.body.appendChild(a);a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },'image/png');
+    setStatus(`> png exported (${cols}x${rows})_`);
+  }
+
   function drawLine(x0,y0,x1,y1,mode){
     const dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;
     let err=dx-dy,x=x0,y=y0;
@@ -462,6 +483,7 @@ input[type="range"]::-moz-range-thumb{
   document.getElementById('clearGridBtn').onclick=clearGrid;
   document.getElementById('invertBtn').onclick=invertGrid;
   document.getElementById('exportBtn').onclick=generateData;
+  document.getElementById('downloadPngBtn').onclick=downloadPng;
   document.getElementById('loadHexBtn').onclick=loadHex;
   document.getElementById('processImageBtn').onclick=processImage;
   document.querySelectorAll('[data-target]').forEach(btn=>{
